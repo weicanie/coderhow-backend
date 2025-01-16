@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AichatService } from './aichat.service';
-import { CreateAichatDto } from './dto/create-aichat.dto';
-import { UpdateAichatDto } from './dto/update-aichat.dto';
+import { ConversationDto } from './dto/Conversation.dto';
+import { QuestionDtoDto } from './dto/question.dto';
 
 @Controller('aichat')
 export class AichatController {
-  constructor(private readonly aichatService: AichatService) {}
+	constructor(private readonly aichatService: AichatService) {}
 
-  @Post()
-  create(@Body() createAichatDto: CreateAichatDto) {
-    return this.aichatService.create(createAichatDto);
-  }
+	@Post()
+	async getAnswer(@Body() questionDtoDto: QuestionDtoDto) {
+		const { question, messages } = questionDtoDto;
+		return await this.aichatService.getAnswerFromAI(question, messages);
+	}
+	//TODO auth guard
+	//创建jwt鉴权的全局 guard 以及 标识handler需要登录的 decorator
+	//鉴权通过后存储用户信息,并无感续用户token
+	@Post()
+	async storeConversation(@Body() conversationDto: ConversationDto) {}
 
-  @Get()
-  findAll() {
-    return this.aichatService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.aichatService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAichatDto: UpdateAichatDto) {
-    return this.aichatService.update(+id, updateAichatDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.aichatService.remove(+id);
-  }
+	@Get()
+	async getConversationList() {}
 }
