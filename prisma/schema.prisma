@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ai_conversation {
+  id        Int       @id @default(autoincrement())
+  keyname   String    @db.VarChar(100)
+  label     String    @db.VarChar(100)
+  content   Json?
+  user_id   Int
+  create_at DateTime? @default(now()) @db.Timestamp(0)
+  update_at DateTime? @default(now()) @db.Timestamp(0)
+  user      user      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "ai_conversation_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model article {
+  id            Int             @id @default(autoincrement())
+  user_id       Int
+  create_at     DateTime?       @default(now()) @db.Timestamp(0)
+  update_at     DateTime?       @default(now()) @db.Timestamp(0)
+  title         String          @db.VarChar(255)
+  content       String          @db.VarChar(13000)
+  ai_summary    String?         @db.VarChar(3000)
+  user          user            @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "article_ibfk_1")
+  article_image article_image[]
+  article_tag   article_tag[]
+  comment       comment[]
+
+  @@index([user_id], map: "user_id")
+}
+
+model article_image {
+  id         Int       @id @default(autoincrement())
+  filename   String    @db.VarChar(100)
+  mime_type  String    @db.VarChar(50)
+  size       Int?
+  create_at  DateTime? @default(now()) @db.Timestamp(0)
+  article_id Int
+  article    article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "article_image_ibfk_1")
+
+  @@index([article_id], map: "article_id")
+}
+
+model article_tag {
+  article_id Int
+  tag_id     Int
+  create_at  DateTime? @default(now()) @db.Timestamp(0)
+  update_at  DateTime? @default(now()) @db.Timestamp(0)
+  article    article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "article_tag_ibfk_1")
+  tag        tag       @relation(fields: [tag_id], references: [id], onDelete: Cascade, map: "article_tag_ibfk_2")
+
+  @@id([article_id, tag_id])
+  @@index([tag_id], map: "tag_id")
+}
+
+model avatar {
+  id        Int       @id @default(autoincrement())
+  filename  String    @db.VarChar(100)
+  mime_type String    @db.VarChar(50)
+  size      Int?
+  create_at DateTime? @default(now()) @db.Timestamp(0)
+  user_id   Int
+  user      user      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "avatar_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model comment {
+  id            Int       @id @default(autoincrement())
+  content       String    @db.VarChar(700)
+  user_id       Int
+  article_id    Int
+  comment_id    Int?
+  judge         Int
+  value         Int
+  create_at     DateTime? @default(now()) @db.Timestamp(0)
+  update_at     DateTime? @default(now()) @db.Timestamp(0)
+  user          user      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "comment_ibfk_1")
+  article       article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "comment_ibfk_2")
+  comment       comment?  @relation("commentTocomment", fields: [comment_id], references: [id], onDelete: Cascade, map: "comment_ibfk_3")
+  other_comment comment[] @relation("commentTocomment")
+
+  @@index([article_id], map: "article_id")
+  @@index([comment_id], map: "comment_id")
+  @@index([user_id], map: "user_id")
+}
+
+model tag {
+  id          Int           @id @default(autoincrement())
+  content     String        @unique(map: "content") @db.VarChar(700)
+  create_at   DateTime?     @default(now()) @db.Timestamp(0)
+  update_at   DateTime?     @default(now()) @db.Timestamp(0)
+  article_tag article_tag[]
+}
+
+model user {
+  id              Int               @id @default(autoincrement())
+  username        String            @unique(map: "username") @db.VarChar(50)
+  password        String            @db.VarChar(50)
+  avatar_url      String?           @db.VarChar(100)
+  create_at       DateTime?         @default(now()) @db.Timestamp(0)
+  update_at       DateTime?         @default(now()) @db.Timestamp(0)
+  sign            String?           @db.VarChar(255)
+  ai_conversation ai_conversation[]
+  article         article[]
+  avatar          avatar[]
+  comment         comment[]
+}
