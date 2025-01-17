@@ -1,51 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DbService } from '../db/db.service';
+import { UserInfoFromToken } from '../types';
 import { passwordEncrypt } from '../utils';
-import { UserInfo } from './dto/user-info.dto';
+import { UserInfoDto } from './dto/user-info.dto';
 @Injectable()
 export class UserService {
 	constructor(
 		public dbService: DbService,
 		public JwtService: JwtService
 	) {}
-	async createUser(userInfo: UserInfo) {
+	async createUser(userInfo: UserInfoDto) {
 		let { username, password } = userInfo;
 		await this.userInfoCheck(userInfo);
 		password = passwordEncrypt(password);
 		const res = await this.addUser(username, password);
 		return res;
 	}
-	async userInfoCheck(userInfo: UserInfo) {
+	async userInfoCheck(userInfo: UserInfoDto) {
 		const { username, password } = userInfo;
 		if (!username || !password) {
-			//TODO错误处理
-			// ctx.app.emit('error', new Error('-1001'), ctx);
-			return;
+			throw new BadRequestException('用户名或密码不能为空');
 		}
 		const userInfoR = await this.getUsername(username);
 		if (userInfoR !== null) {
-			//TODO错误处理
-			// ctx.app.emit('error', new Error('-1002'), ctx);
-			return;
+			throw new BadRequestException('用户名已存在');
 		}
 		return userInfoR;
 	}
 
-	async login(userInfo: UserInfo) {
+	async login(userInfo: UserInfoDto) {
 		const { password: md5pwd, id: userId } = await this.userInfoCheck(userInfo);
 		await this.pwdVerify(userInfo, md5pwd);
 		return await this.tokenDispatch(userInfo, userId);
 	}
-	async pwdVerify(userInfo: UserInfo, md5pwd: string) {
+	async pwdVerify(userInfo: UserInfoDto, md5pwd: string) {
 		const { password } = userInfo;
 		if (md5pwd !== passwordEncrypt(password)) {
-			//TODO错误处理
-			// ctx.app.emit('error', new Error('-1004'), ctx);
+			throw new BadRequestException('密码错误');
 			return;
 		}
 	}
-	async tokenDispatch(userInfo: UserInfo, userId: number) {
+	async tokenDispatch(userInfo: UserInfoDto, userId: number) {
 		const { username } = userInfo;
 		const token = this.JwtService.sign(
 			{ userId, username },
@@ -79,7 +75,8 @@ export class UserService {
 		return res;
 	}
 
-	async uploadSign(userId: string, sign: string) {
+	async uploadSign(userInfo: UserInfoFromToken, sign: string) {
+		const { userId } = userInfo;
 		const res = await this.dbService
 			.$executeRaw`UPDATE user SET sign = ${sign} WHERE id = ${userId}`;
 		return res;

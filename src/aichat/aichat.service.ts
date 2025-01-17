@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
+import { DbService } from '../DB/db.service';
+import { UserInfoFromToken } from '../types';
+import { ConversationDto } from './dto/conversation.dto';
 @Injectable()
 export class AichatService {
 	client: OpenAI;
-	constructor() {
+	constructor(public dbService: DbService) {
 		this.client = new OpenAI({
 			apiKey: process.env.API_KEY,
 			baseURL: 'https://api.chatanywhere.tech'
@@ -67,5 +70,43 @@ export class AichatService {
 		messages = messages.slice(topIndex);
 		console.log('sliceMessages 超出指定长度,上下文已经进行截取,截取后的上下文:', messages);
 		return messages;
+	}
+
+	async storeConversation(userInfo: UserInfoFromToken, conversationDto: ConversationDto) {
+		const { userId } = userInfo;
+		const { key, label } = conversationDto;
+		let content = conversationDto.content;
+		const values = await this.dbService
+			.$queryRaw`SELECT * FROM ai_conversation WHERE keyname = ${key} AND user_id =${userId}`;
+		// 初始化的空会话
+		if (!values[0]?.content && content.length === 0) {
+			const res = await this.dbService
+				.$executeRaw`INSERT INTO ai_conversation (keyname, label, content, user_id) VALUE(${key}, ${label}, ${content}, ${userId})`;
+			return res;
+		}
+		// 非初始化的空对话
+		if (content.length === 0) {
+			return '空对话,已忽略';
+		}
+		//判断会话数据是否已存在
+		if (values[0]?.content) {
+			//更新
+			const res2 = await this.dbService
+				.$executeRaw`UPDATE ai_conversation SET content = ${content} WHERE keyname = ${key}`;
+			return res2;
+		} else {
+			//新增
+			const res3 = await this.dbService
+				.$executeRaw`INSERT INTO ai_conversation (keyname, label, content, user_id) VALUE(${key}, ${label}, ${content}, ${userId})`;
+			return res3;
+		}
+	}
+
+	async getConversationList(userInfo: UserInfoFromToken) {
+		const { userId } = userInfo;
+		const values = await this.dbService.$queryRaw`
+		SELECT * FROM ai_conversation  WHERE user_id = ${userId}
+		`;
+		return values[0];
 	}
 }

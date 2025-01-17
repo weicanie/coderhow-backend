@@ -23,9 +23,12 @@ export class HasPermissionGuard implements CanActivate {
 		const userInfo = request.userInfo;
 		// 查询用户是否拥有该资源
 		const tableName = verifyMetaData.tableName;
+		//TODO 健壮性由表名Id格式确保，无法验证。
+		const resourceId = request.params[`${tableName}Id`];
 		const values = this.dbService[tableName].findUnique({
 			where: {
-				userId: userInfo.userId
+				user_id: userInfo.userId,
+				id: resourceId
 			}
 		});
 		if (values !== null) {

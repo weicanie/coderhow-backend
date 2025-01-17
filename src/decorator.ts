@@ -7,7 +7,7 @@ const RequireLogin = () =>
 		requireLogin: true
 	});
 // 标识某个 handler 需要拥有该资源操作权限才能执行。
-const RequireOwn = (tableName: string) =>
+const RequirePermission = (tableName: string) =>
 	SetMetadata('verify', {
 		requireOwn: true,
 		tableName
@@ -18,6 +18,6 @@ const UserInfo = createParamDecorator((param: string, ctx: ExecutionContext) => 
 	if (!request.userInfo) {
 		return null;
 	}
-	return param ? request.userInfo[param] : request.userInfo;
+	return request.userInfo;
 });
-export { RequireLogin, RequireOwn, UserInfo };
+export { RequireLogin, RequirePermission, UserInfo };

@@ -42,6 +42,7 @@ export class IsLoginGuard implements CanActivate {
 		);
 		const response = context.switchToHttp().getResponse<Response>();
 		response.setHeader('token', newToken);
+
 		return true;
 	}
 }
