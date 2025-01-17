@@ -11,7 +11,7 @@ export class UserController {
 		return this.userService.createUser(userInfo);
 	}
 
-	@Post('commit')
+	@Post('login')
 	login(@Body() userInfo: UserInfo) {
 		return this.userService.login(userInfo);
 	}
