@@ -2,6 +2,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output   = "../generated/docs"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -36,11 +41,20 @@ model article {
   @@index([user_id], map: "user_id")
 }
 
+// model article_image {
+//   id         Int       @id @default(autoincrement())
+//   filename   String    @db.VarChar(100)
+//   mime_type  String    @db.VarChar(50)
+//   size       Int?
+//   create_at  DateTime? @default(now()) @db.Timestamp(0)
+//   article_id Int
+//   article    article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "article_image_ibfk_1")
+
+//   @@index([article_id], map: "article_id")
+// }
 model article_image {
   id         Int       @id @default(autoincrement())
-  filename   String    @db.VarChar(100)
-  mime_type  String    @db.VarChar(50)
-  size       Int?
+  image_url  String    @db.VarChar(100)
   create_at  DateTime? @default(now()) @db.Timestamp(0)
   article_id Int
   article    article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "article_image_ibfk_1")

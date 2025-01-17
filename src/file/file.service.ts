@@ -1,26 +1,28 @@
-import { Injectable } from '@nestjs/common';
-import { CreateFileDto } from './dto/create-file.dto';
-import { UpdateFileDto } from './dto/update-file.dto';
-
+import { Inject, Injectable } from '@nestjs/common';
+import * as Minio from 'minio';
+import { DbService } from '../DB/db.service';
 @Injectable()
 export class FileService {
-  create(createFileDto: CreateFileDto) {
-    return 'This action adds a new file';
-  }
-
-  findAll() {
-    return `This action returns all file`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} file`;
-  }
-
-  update(id: number, updateFileDto: UpdateFileDto) {
-    return `This action updates a #${id} file`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} file`;
-  }
+	@Inject('OSS-CLIENT') OSSClient: Minio.Client;
+	constructor(public dbService: DbService) {}
+	async getAvatar(userId: string) {
+		return await this.dbService.user.findUnique({
+			select: {
+				avatar_url: true
+			},
+			where: {
+				id: +userId
+			}
+		});
+	}
+	async getImage(articleId: string) {
+		return await this.dbService.article_image.findMany({
+			select: {
+				image_url: true
+			},
+			where: {
+				article_id: +articleId
+			}
+		});
+	}
 }

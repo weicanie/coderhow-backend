@@ -1,34 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { FileService } from './file.service';
-import { CreateFileDto } from './dto/create-file.dto';
-import { UpdateFileDto } from './dto/update-file.dto';
-
+//TODO 路由已变，改前端
+//TODO 前端改为直传OSS (article_image表改为只提供URL)
 @Controller('file')
 export class FileController {
-  constructor(private readonly fileService: FileService) {}
+	constructor(private readonly fileService: FileService) {}
 
-  @Post()
-  create(@Body() createFileDto: CreateFileDto) {
-    return this.fileService.create(createFileDto);
-  }
+	@Get('avatar/:userId')
+	async getAvatar(@Param('userId') userId: string) {
+		return await this.fileService.getAvatar(userId);
+	}
 
-  @Get()
-  findAll() {
-    return this.fileService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.fileService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFileDto: UpdateFileDto) {
-    return this.fileService.update(+id, updateFileDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.fileService.remove(+id);
-  }
+	@Get('article-image/:articleId')
+	async getImages(@Param('articleId') articleId: string) {
+		return await this.fileService.getImage(articleId);
+	}
 }

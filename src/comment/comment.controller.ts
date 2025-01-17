@@ -1,34 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
+import { UserInfoFromToken } from '../types';
 import { CommentService } from './comment.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Controller('comment')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+	constructor(private readonly commentService: CommentService) {}
+	@Post(':articleId/:commentId')
+	@RequireLogin()
+	async addComment(
+		@Body('content') content: string,
+		@Param('articleId') articleId: string,
+		@Param('commentId') commentId: string,
+		@UserInfo() userInfo: UserInfoFromToken
+	) {
+		return await this.commentService.addComment(content, articleId, commentId, userInfo.userId);
+	}
 
-  @Post()
-  create(@Body() createCommentDto: CreateCommentDto) {
-    return this.commentService.create(createCommentDto);
-  }
+	@Get(':articleId')
+	async getCommentCount(@Param('articleId') articleId: string) {
+		return await this.commentService.getCommentCount(articleId);
+	}
 
-  @Get()
-  findAll() {
-    return this.commentService.findAll();
-  }
+	@Patch(':commentId')
+	@RequireLogin()
+	@RequirePermission('comment')
+	async modifyComment(@Param('commentId') commentId: string, @Body('content') content: string) {
+		return await this.commentService.modifyComment(commentId, content);
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commentService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCommentDto: UpdateCommentDto) {
-    return this.commentService.update(+id, updateCommentDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentService.remove(+id);
-  }
+	@Delete(':commentId')
+	@RequireLogin()
+	@RequirePermission('comment')
+	async removeComment(@Param('commentId') commentId: string) {
+		return this.commentService.removeComment(commentId);
+	}
 }

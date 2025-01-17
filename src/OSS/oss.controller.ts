@@ -6,7 +6,7 @@ export class OssController {
 	private ossClient: Minio.Client;
 
 	@Get('presignedUrl')
-	presignedPutObject(@Query('name') name: string) {
-		return this.ossClient.presignedPutObject('coderhow', name, 3600);
+	async presignedPutObject(@Query('name') name: string) {
+		return await this.ossClient.presignedPutObject('coderhow', name, 3600);
 	}
 }
