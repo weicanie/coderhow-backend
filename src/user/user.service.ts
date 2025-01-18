@@ -1,14 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { DbService } from '../db/db.service';
+// import { DbService } from '../db/db.service';
+import { DbService } from '../DB/db.service';
 import { UserInfoFromToken } from '../types';
 import { passwordEncrypt } from '../utils';
 import { UserInfoDto } from './dto/user-info.dto';
 @Injectable()
 export class UserService {
 	constructor(
-		public dbService: DbService,
-		public JwtService: JwtService
+		@Inject(DbService)
+		private readonly dbService: DbService,
+		@Inject(JwtService)
+		private readonly JwtService: JwtService
 	) {}
 	async createUser(userInfo: UserInfoDto) {
 		let { username, password } = userInfo;
@@ -38,7 +41,6 @@ export class UserService {
 		const { password } = userInfo;
 		if (md5pwd !== passwordEncrypt(password)) {
 			throw new BadRequestException('密码错误');
-			return;
 		}
 	}
 	async tokenDispatch(userInfo: UserInfoDto, userId: number) {

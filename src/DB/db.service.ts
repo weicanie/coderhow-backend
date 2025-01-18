@@ -14,6 +14,11 @@ export class DbService extends PrismaClient implements OnModuleInit {
 	}
 
 	async onModuleInit() {
-		await this.$connect();
+		try {
+			await this.$connect();
+			console.log('连接成功');
+		} catch (error) {
+			console.log('连接失败', error);
+		}
 	}
 }
