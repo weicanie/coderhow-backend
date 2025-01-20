@@ -85,8 +85,22 @@ export class UserService {
 	}
 
 	async getUserInfo(userId: string) {
-		const values: unknown[] = await this.dbService
-			.$queryRaw`SELECT id, username, avatar_url, sign FROM user WHERE id =${userId}`;
-		return values;
+		const value = this.dbService.user.findUnique({
+			where: {
+				id: +userId
+			},
+			select: {
+				id: true,
+				create_at: true,
+				update_at: true,
+				username: true,
+				avatar_url: true,
+				sign: true
+			}
+		});
+		// if (value) {
+		// 	Reflect.deleteProperty(value, 'password');
+		// }
+		return value;
 	}
 }

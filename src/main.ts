@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import { AppModule } from './APP/app.module';
 async function bootstrap() {
@@ -8,6 +9,13 @@ async function bootstrap() {
 	//TODO docker版
 	//TODO 整合chat后端
 	const app = await NestFactory.create(AppModule);
+	const config = new DocumentBuilder()
+		.setTitle('coderhow backend 接口文档')
+		.setDescription('coderhow backend 接口文档')
+		.setVersion('1.0')
+		.build();
+	const document = SwaggerModule.createDocument(app, config);
+	SwaggerModule.setup('doc', app, document);
 	await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

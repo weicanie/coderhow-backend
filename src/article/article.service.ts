@@ -23,6 +23,7 @@ export class ArticleService {
 		});
 		//添加标签
 		this.tagService.addTagToArticle(String(article.id), taglist);
+		return article;
 	}
 	async removeArticle(articleId: string) {
 		return await this.dbService.article.delete({

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DbService } from '../DB/db.service';
 
 @Injectable()
@@ -7,28 +7,35 @@ export class TagService {
 	async addTag(content: string) {
 		return await this.dbService.$executeRaw`INSERT INTO tag (content) VALUES (${content})`;
 	}
-	//TODO 分页写死了
-	async getTagList() {
-		const statement = `
-		SELECT id,content FROM tag
-		LIMIT 0,7
-		`;
-		const values = await this.dbService.$executeRaw`${statement}`;
+	// 分页查询
+	async getTagList(page: number, pageSize: number) {
+		const values = this.dbService.tag.findMany({
+			skip: (page - 1) * pageSize,
+			take: pageSize
+		});
 		return values;
 	}
 	async addTagToArticle(articleId: string, taglist: string[]) {
 		const readyTaglist = await this.checkAndMapTagList(taglist);
 		const tagIdList = readyTaglist.map(item => item.id);
-		const reslist = [];
+		const reslist: Array<{
+			create_at: Date | null;
+			update_at: Date | null;
+			article_id: number;
+			tag_id: number;
+		}> = [];
 		for (const tagId of tagIdList) {
 			if (await this.tagIsOwned(articleId, tagId)) continue;
 			try {
-				const statement = `INSERT INTO article_tag (article_id, tag_id) VALUES (${articleId}, ${tagId})`;
-				const res = await this.dbService.$executeRaw`${statement}`;
+				const res = await this.dbService.article_tag.create({
+					data: {
+						article_id: +articleId,
+						tag_id: tagId
+					}
+				});
 				reslist.push(res);
 			} catch (error) {
-				console.log(error);
-				return;
+				throw new InternalServerErrorException(error);
 			}
 		}
 		return reslist;

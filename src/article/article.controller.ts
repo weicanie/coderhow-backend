@@ -1,38 +1,78 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { ArticleService } from './article.service';
 import { ArticleDto } from './dto/article.dto';
+import { ArticleResDto } from './dto/res.article.dto';
 
 @Controller('article')
 export class ArticleController {
 	constructor(private readonly articleService: ArticleService) {}
-
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ArticleResDto
+	})
+	@ApiBody({
+		type: ArticleDto
+	})
 	@Post()
 	@RequireLogin()
 	async addArticle(@Body() articleDto: ArticleDto, @UserInfo() userInfo: UserInfoFromToken) {
 		const { title, content, tag: taglist } = articleDto;
 		const { userId } = userInfo;
-		this.articleService.addArticle(title, content, userId, taglist);
+		return await this.articleService.addArticle(title, content, userId, taglist);
 	}
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: Object
+	})
+	@ApiParam({
+		name: 'articleId',
+		type: String,
+		required: true,
+		example: '1'
+	})
 	@Get(`/:articleId`)
 	@RequireLogin()
 	@RequirePermission('article')
 	async getArticleDetail(@Param('articleId') articleId: string) {
-		this.articleService.getArticleDetail(articleId);
+		return await this.articleService.getArticleDetail(articleId);
 	}
-
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ArticleResDto
+	})
+	@ApiParam({
+		name: 'articleId',
+		type: String,
+		required: true,
+		example: '1'
+	})
 	@Delete(`/:articleId`)
 	@RequireLogin()
 	@RequirePermission('article')
 	async removeArticle(@Param('articleId') articleId: string) {
-		this.articleService.removeArticle(articleId);
+		return await this.articleService.removeArticle(articleId);
 	}
-
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ArticleResDto
+	})
+	@ApiParam({
+		name: 'articleId',
+		type: String,
+		required: true,
+		example: '1'
+	})
 	@Patch(`/:articleId`)
 	@RequireLogin()
 	@RequirePermission('article')
 	async modifyArticle(@Param('articleId') articleId: string, @Body('content') content: string) {
-		this.articleService.modifyArticle(articleId, content);
+		return await this.articleService.modifyArticle(articleId, content);
 	}
 }

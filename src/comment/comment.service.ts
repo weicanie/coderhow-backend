@@ -32,7 +32,7 @@ export class CommentService {
 		// TODO commentId不传的情况dto如何处理？
 		if (commentId) {
 			//子评论
-			this.dbservice.comment.create({
+			return await this.dbservice.comment.create({
 				data: {
 					content,
 					user_id: +userId,
@@ -44,7 +44,7 @@ export class CommentService {
 			});
 		} else {
 			//文章评论
-			this.dbservice.comment.create({
+			return await this.dbservice.comment.create({
 				data: {
 					content,
 					user_id: +userId,

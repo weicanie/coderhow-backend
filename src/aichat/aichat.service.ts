@@ -104,9 +104,11 @@ export class AichatService {
 
 	async getConversationList(userInfo: UserInfoFromToken) {
 		const { userId } = userInfo;
-		const values = await this.dbService.$queryRaw`
-		SELECT * FROM ai_conversation  WHERE user_id = ${userId}
-		`;
-		return values[0];
+		const values = await this.dbService.ai_conversation.findMany({
+			where: {
+				user_id: +userId
+			}
+		});
+		return values;
 	}
 }
