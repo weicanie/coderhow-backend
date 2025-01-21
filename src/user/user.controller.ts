@@ -31,12 +31,13 @@ export class UserController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: class {
-			userId: number;
-			username: string;
-			token: string;
-			avatar_url: string;
-		}
+		type: () =>
+			new (class {
+				userId: number;
+				username: string;
+				token: string;
+				avatar_url: string;
+			})()
 	})
 	async login(@Body() userInfo: UserInfoDto) {
 		return this.userService.login(userInfo);
@@ -66,14 +67,15 @@ export class UserController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: class {
-			id: number;
-			username: string;
-			avatar_url: string | null;
-			create_at: Date | null;
-			update_at: Date | null;
-			sign: string | null;
-		}
+		type: () =>
+			new (class {
+				id: number;
+				username: string;
+				avatar_url: string | null;
+				create_at: Date | null;
+				update_at: Date | null;
+				sign: string | null;
+			})()
 	})
 	async getUserInfo(@Param('id') id: string) {
 		return this.userService.getUserInfo(id);

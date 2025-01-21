@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { AichatService } from './aichat.service';
@@ -10,6 +10,7 @@ import { AiConversationDto } from './dto/res.aiconversation.dto';
 @Controller('aichat')
 export class AichatController {
 	constructor(private readonly aichatService: AichatService) {}
+	@ApiOperation({ summary: 'getAnswer', description: 'getAnswer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: String
@@ -22,6 +23,7 @@ export class AichatController {
 		const { question, messages } = questionDtoDto;
 		return await this.aichatService.getAnswerFromAI(question, messages);
 	}
+	@ApiOperation({ summary: 'storeConversation', description: 'storeConversation' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -31,17 +33,18 @@ export class AichatController {
 		type: ConversationDto
 	})
 	@RequireLogin()
-	@Post()
+	@Post('store')
 	async storeConversation(
 		@UserInfo() userInfo: UserInfoFromToken,
 		@Body() conversationDto: ConversationDto
 	) {
 		return await this.aichatService.storeConversation(userInfo, conversationDto);
 	}
+	@ApiOperation({ summary: 'getConversationList', description: 'getConversationList' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: Array<AiConversationDto>
+		type: [AiConversationDto]
 	})
 	@RequireLogin()
 	@Get()
@@ -49,4 +52,3 @@ export class AichatController {
 		return await this.aichatService.getConversationList(userInfo);
 	}
 }
-const aaa = 123;
