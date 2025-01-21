@@ -5,7 +5,11 @@ import { DbService } from '../DB/db.service';
 export class TagService {
 	constructor(public dbService: DbService) {}
 	async addTag(content: string) {
-		return await this.dbService.$executeRaw`INSERT INTO tag (content) VALUES (${content})`;
+		return await this.dbService.tag.create({
+			data: {
+				content
+			}
+		});
 	}
 	// 分页查询
 	async getTagList(page: number, pageSize: number) {
@@ -43,21 +47,37 @@ export class TagService {
 
 	async removeTagFromArticle(tagId: string, articleId: string) {
 		if (!(await this.tagIsOwned(articleId, tagId))) return;
-		const statement = `DELETE FROM article_tag WHERE tag_id = ${tagId} AND article_id = ${articleId}`;
-		return await this.dbService.$executeRaw`${statement}`;
+		// FIXME delete竟然会报错
+		return await this.dbService.article_tag.deleteMany({
+			where: {
+				tag_id: +tagId,
+				article_id: +articleId
+			}
+		});
 	}
 
 	async findTag(content: string) {
-		const statement = `SELECT id,content FROM tag WHERE content = ${content}`;
-		const values = await this.dbService.$queryRaw`${statement}`;
-		return values[0];
+		const value = await this.dbService.tag.findUnique({
+			where: {
+				content
+			},
+			select: {
+				id: true,
+				content: true
+			}
+		});
+		return value;
 	}
 
 	async tagIsOwned(articleId: string, tagId: string) {
 		//检查文章是否已经有该标签
-		const statement = `SELECT * FROM article_tag WHERE article_id = ${articleId} AND tag_id=${tagId}`;
-		const values = await this.dbService.$queryRaw`${statement}`;
-		if (values === null) return false;
+		const result = await this.dbService.article_tag.findFirst({
+			where: {
+				article_id: +articleId,
+				tag_id: +tagId
+			}
+		});
+		if (result === null) return false;
 		return true;
 	}
 	async checkAndMapTagList(taglist: string[]) {
@@ -78,9 +98,12 @@ export class TagService {
 		return readyTaglist;
 	}
 	async checkTagisDuplicated(content: string) {
-		const statement = `SELECT * FROM tag WHERE content = ${content}`;
-		const values = await this.dbService.$queryRaw`${statement}`;
-		if (!values[0]?.id) return false;
-		return true;
+		const values = await this.dbService.tag.findUnique({
+			where: {
+				content
+			}
+		});
+		if (values?.id) return true;
+		return false;
 	}
 }

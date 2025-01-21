@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpStatus, Param, Patch, Post } from '@nestjs/c
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
+import { UserInfoResDto } from './dto/res.userInfo.dto';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UserService } from './user.service';
 
@@ -17,7 +18,7 @@ export class UserController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: Number
+		type: String
 	})
 	async createUser(@Body() userInfo: UserInfoDto) {
 		return this.userService.createUser(userInfo);
@@ -31,13 +32,7 @@ export class UserController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: () =>
-			new (class {
-				userId: number;
-				username: string;
-				token: string;
-				avatar_url: string;
-			})()
+		type: UserInfoResDto
 	})
 	async login(@Body() userInfo: UserInfoDto) {
 		return this.userService.login(userInfo);
@@ -67,15 +62,7 @@ export class UserController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: () =>
-			new (class {
-				id: number;
-				username: string;
-				avatar_url: string | null;
-				create_at: Date | null;
-				update_at: Date | null;
-				sign: string | null;
-			})()
+		type: UserInfoResDto
 	})
 	async getUserInfo(@Param('id') id: string) {
 		return this.userService.getUserInfo(id);

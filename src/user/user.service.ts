@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	InternalServerErrorException
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 // import { DbService } from '../db/db.service';
 import { DbService } from '../DB/db.service';
@@ -25,17 +30,35 @@ export class UserService {
 		if (!username || !password) {
 			throw new BadRequestException('用户名或密码不能为空');
 		}
-		const userInfoR = await this.getUsername(username);
-		if (userInfoR !== null) {
+		const userInfoData = await this.getUsername(username);
+		if (userInfoData !== null) {
 			throw new BadRequestException('用户名已存在');
 		}
-		return userInfoR;
+		return userInfoData;
 	}
 
 	async login(userInfo: UserInfoDto) {
-		const { password: md5pwd, id: userId } = await this.userInfoCheck(userInfo);
-		await this.pwdVerify(userInfo, md5pwd);
-		return await this.tokenDispatch(userInfo, userId);
+		const { password: pwd, id: userId } = await this.getUsername(userInfo.username);
+		if (!userInfo.username || !pwd) {
+			throw new BadRequestException('用户名或密码不能为空');
+		}
+		await this.pwdVerify(userInfo, pwd);
+		const token = await this.tokenDispatch(userInfo, userId);
+		const res = await this.dbService.user.findUnique({
+			where: {
+				id: userId
+			},
+			select: {
+				id: true,
+				create_at: true,
+				update_at: true,
+				username: true,
+				avatar_url: true,
+				sign: true
+			}
+		});
+
+		return { ...res, token };
 	}
 	async pwdVerify(userInfo: UserInfoDto, md5pwd: string) {
 		const { password } = userInfo;
@@ -53,13 +76,7 @@ export class UserService {
 				expiresIn: 24 * 60 * 60 * 7
 			}
 		);
-		const avatar_url = `${process.env.HOST}:${process.env.PORT}/avatar/${userId}`;
-		return {
-			userId,
-			username,
-			token,
-			avatar_url
-		};
+		return token;
 	}
 
 	async getUsername(username: string) {
@@ -72,9 +89,17 @@ export class UserService {
 	}
 
 	async addUser(username: string, password: string) {
-		const res = await this.dbService
-			.$executeRaw`INSERT INTO user (username, password) VALUES (${username},${password})`;
-		return res;
+		try {
+			await this.dbService.user.create({
+				data: {
+					username,
+					password
+				}
+			});
+			return '注册成功';
+		} catch (error) {
+			throw new InternalServerErrorException(error);
+		}
 	}
 
 	async uploadSign(userInfo: UserInfoFromToken, sign: string) {

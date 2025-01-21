@@ -13,6 +13,11 @@ async function bootstrap() {
 		.setTitle('coderhow backend 接口文档')
 		.setDescription('coderhow backend 接口文档')
 		.setVersion('1.0')
+		.addBearerAuth({
+			type: 'http',
+			description: '基于 jwt 的认证',
+			name: 'bearer'
+		})
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
 	SwaggerModule.setup('doc', app, document);

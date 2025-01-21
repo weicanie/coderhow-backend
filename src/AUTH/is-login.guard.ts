@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Observable } from 'rxjs';
-import { UserInfoFromToken, VerifyMetaData } from '../types';
+import { MyRequest, UserInfoFromToken, VerifyMetaData } from '../types';
 @Injectable()
 export class IsLoginGuard implements CanActivate {
 	constructor(
@@ -15,13 +15,13 @@ export class IsLoginGuard implements CanActivate {
 			context.getClass(),
 			context.getHandler()
 		]);
-		if (!verify.requireLogin) {
+		if (!verify?.requireLogin) {
 			return true;
 		}
 		// jwt鉴定token,并提取用户信息
-		const request = context.switchToHttp().getRequest<Request>();
-		let token: string = request.body.token;
-		token = token.replace('bear ', '');
+		const request = context.switchToHttp().getRequest<MyRequest>();
+		let token: string = request.headers.authorization;
+		token = token.replace('Bearer ', '');
 		let userInfo: UserInfoFromToken;
 		try {
 			userInfo = this.jwtService.verify(token, {
@@ -30,6 +30,8 @@ export class IsLoginGuard implements CanActivate {
 		} catch (error) {
 			throw new UnauthorizedException('用户未登录');
 		}
+		// 存储用户信息
+		request.userInfo = userInfo;
 		// 无感续token
 		const { userId, username } = userInfo;
 		const newToken = this.jwtService.sign(
