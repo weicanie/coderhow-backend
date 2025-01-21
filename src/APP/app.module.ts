@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { Module, ValidationPipe } from '@nestjs/common';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AichatModule } from '../aichat/aichat.module';
 import { ArticleModule } from '../article/article.module';
@@ -38,6 +38,10 @@ import { AppService } from './app.service';
 		{
 			provide: APP_GUARD,
 			useClass: IsLoginGuard
+		},
+		{
+			provide: APP_PIPE,
+			useClass: ValidationPipe
 		}
 	]
 })
