@@ -43,7 +43,200 @@ export class ArticleService {
 			}
 		});
 	}
-	async getArticleList(size = 5, offset = 0) {
+
+	// FIXME 为什么参数没有转为number
+	async getArticleList(page = 1, pageSize = 5) {
+		const articleSelfs = await this.dbService.article.findMany({
+			select: {
+				id: true,
+				title: true,
+				content: true,
+				ai_summary: true,
+				create_at: true,
+				update_at: true
+			},
+			skip: (page - 1) * pageSize,
+			take: +pageSize
+		});
+		const articles = await this.dbService.article.findMany({
+			include: {
+				user: {
+					select: {
+						id: true,
+						username: true,
+						avatar_url: true
+					}
+				},
+				comment: {
+					select: {
+						id: true,
+						content: true,
+						comment_id: true,
+						judge: true,
+						value: true,
+						user: {
+							select: {
+								id: true,
+								username: true,
+								avatar_url: true
+							}
+						}
+					}
+				},
+				article_image: {
+					select: {
+						id: true,
+						image_url: true
+					}
+				},
+				article_tag: {
+					select: {
+						tag: {
+							select: {
+								id: true,
+								content: true
+							}
+						}
+					}
+				}
+			},
+			skip: (page - 1) * pageSize,
+			take: +pageSize
+		});
+		const transformedArticles = articles.map((article, index) => ({
+			id: articleSelfs[index].id,
+			title: articleSelfs[index].title,
+			content: articleSelfs[index].content,
+			ai_summary: articleSelfs[index].ai_summary,
+			create_at: articleSelfs[index].create_at,
+			update_at: articleSelfs[index].update_at,
+			author: {
+				user_id: article.user.id,
+				username: article.user.username,
+				avatar_url: article.user.avatar_url
+			},
+			comment: article.comment.map(comment => ({
+				id: comment.id,
+				content: comment.content,
+				comment_id: comment.comment_id,
+				judge: comment.judge,
+				value: comment.value,
+				user: {
+					user_id: comment.user.id,
+					username: comment.user.username,
+					avatar_url: comment.user.avatar_url
+				}
+			})),
+			imagelist: article.article_image.map(image => ({
+				id: image.id,
+				image_url: image.image_url
+			})),
+			tag: article.article_tag.map(articleTag => ({
+				id: articleTag.tag.id,
+				content: articleTag.tag.content
+			}))
+		}));
+
+		return transformedArticles;
+	}
+	async getArticleDetail(articleId: string) {
+		//获取单篇文章及其评论列表、标签列表
+		const articleSelf = await this.dbService.article.findUnique({
+			select: {
+				id: true,
+				title: true,
+				content: true,
+				ai_summary: true,
+				create_at: true,
+				update_at: true
+			},
+			where: {
+				id: +articleId
+			}
+		});
+		const article = await this.dbService.article.findUnique({
+			include: {
+				user: {
+					select: {
+						id: true,
+						username: true,
+						avatar_url: true
+					}
+				},
+				comment: {
+					select: {
+						id: true,
+						content: true,
+						comment_id: true,
+						judge: true,
+						value: true,
+						user: {
+							select: {
+								id: true,
+								username: true,
+								avatar_url: true
+							}
+						}
+					}
+				},
+				article_image: {
+					select: {
+						id: true,
+						image_url: true
+					}
+				},
+				article_tag: {
+					select: {
+						tag: {
+							select: {
+								id: true,
+								content: true
+							}
+						}
+					}
+				}
+			},
+			where: {
+				id: +articleId
+			}
+		});
+		const transformedArticles = {
+			id: articleSelf.id,
+			title: articleSelf.title,
+			content: articleSelf.content,
+			ai_summary: articleSelf.ai_summary,
+			create_at: articleSelf.create_at,
+			update_at: articleSelf.update_at,
+			author: {
+				user_id: article.user.id,
+				username: article.user.username,
+				avatar_url: article.user.avatar_url
+			},
+			comment: article.comment.map(comment => ({
+				id: comment.id,
+				content: comment.content,
+				comment_id: comment.comment_id,
+				judge: comment.judge,
+				value: comment.value,
+				user: {
+					user_id: comment.user.id,
+					username: comment.user.username,
+					avatar_url: comment.user.avatar_url
+				}
+			})),
+			imagelist: article.article_image.map(image => ({
+				id: image.id,
+				image_url: image.image_url
+			})),
+			tag: article.article_tag.map(articleTag => ({
+				id: articleTag.tag.id,
+				content: articleTag.tag.content
+			}))
+		};
+
+		return transformedArticles;
+	}
+	async getArticleList2(page = 0, pageSize = 5) {
 		const statement = `
     SELECT 
       m.id id, m.title title, m.content content, m.ai_summary, m.create_at create_at, m.update_at update_at, 
@@ -66,7 +259,7 @@ export class ArticleService {
       ) comment,
       (
         SELECT JSON_ARRAYAGG(
-        JSON_OBJECT('id',ai.id, 'filename', ai.filename,'mimetype', ai.mime_type) 
+        JSON_OBJECT('id',ai.id, 'image_url', ai.image_url) 
         ) imagelist
         FROM article n 
         LEFT JOIN article_image ai 
@@ -85,15 +278,12 @@ export class ArticleService {
     FROM article m 
     LEFT JOIN comment c ON m.id = c.article_id
     GROUP BY m.id
-		LIMIT ${String(offset)}, ${String(size)}
+		LIMIT ${(page - 1) * pageSize}, ${pageSize}
     `;
-		//offset用的是索引，不是'id'，索引从0开始
-		//'id'可以当浮标，用来在即时通信中避免消息插入导致历史消息索引错位
 		const values = await this.dbService.$queryRaw`${statement}`;
 		return values;
 	}
-
-	async getArticleDetail(articleId: string) {
+	async getArticleDetail2(articleId: string) {
 		//获取单篇文章及其评论列表、标签列表
 		const statement = `
     SELECT 
@@ -139,12 +329,7 @@ export class ArticleService {
     GROUP BY m.id
 		HAVING m.id = ${articleId}
     `;
-		try {
-			const values = await this.dbService.$queryRaw`${statement}`;
-			return values;
-		} catch (error) {
-			// TODO 数据库操作错误处理
-			console.log(error);
-		}
+		const values = await this.dbService.$queryRaw`${statement}`;
+		return values;
 	}
 }

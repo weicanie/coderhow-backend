@@ -15,7 +15,7 @@ async function bootstrap() {
 		.setVersion('1.0')
 		.addBearerAuth({
 			type: 'http',
-			description: '基于 jwt 的认证',
+			description: 'jwt token',
 			name: 'bearer'
 		})
 		.build();

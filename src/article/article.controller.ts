@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	ParseIntPipe,
+	Patch,
+	Post
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
@@ -36,10 +46,31 @@ export class ArticleController {
 		example: '1'
 	})
 	@Get(`/:articleId`)
-	@RequireLogin()
-	@RequirePermission('article')
 	async getArticleDetail(@Param('articleId') articleId: string) {
 		return await this.articleService.getArticleDetail(articleId);
+	}
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: Object
+	})
+	@ApiParam({
+		name: 'page',
+		type: Number,
+		required: true,
+		example: '1'
+	})
+	@ApiParam({
+		name: 'pageSize',
+		type: Number,
+		required: true,
+		example: '1'
+	})
+	@Get(`/:page/:pageSize`)
+	async getArticleList(
+		@Param('page', ParseIntPipe) page: number,
+		@Param('pageSize', ParseIntPipe) pageSize: number
+	) {
+		return await this.articleService.getArticleList(page, pageSize);
 	}
 	@ApiBearerAuth('bearer')
 	@ApiResponse({

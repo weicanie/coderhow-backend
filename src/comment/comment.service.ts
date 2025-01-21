@@ -29,7 +29,6 @@ export class CommentService {
 		const emotionAns: string = await this.aichatService.getAnswerFromAI(prompt, []);
 		const value = emotionAns.match(/^\d(?=,)/g)[0];
 		const judge = emotionAns.match(/(?<=,)\d$/g)[0];
-		// TODO commentId不传的情况dto如何处理？
 		if (commentId) {
 			//子评论
 			return await this.dbservice.comment.create({
