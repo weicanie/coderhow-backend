@@ -1,12 +1,12 @@
-import { Body, Controller, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { UserInfoResDto } from './dto/res.userInfo.dto';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UserService } from './user.service';
 
-@Controller('users')
+@Controller('user')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
@@ -51,6 +51,30 @@ export class UserController {
 	})
 	async uploadSign(@UserInfo() userInfo: UserInfoFromToken, @Body('sign') sign: string) {
 		return this.userService.uploadSign(userInfo, sign);
+	}
+
+	@RequireLogin()
+	@Patch('upload-avatar')
+	@ApiOperation({ summary: 'Upload user avatar' })
+	@ApiQuery({
+		name: 'name',
+		description: 'name of file',
+		type: String
+	})
+	@ApiQuery({
+		name: 'bucketName',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: String
+	})
+	async uploadAvatar(
+		@UserInfo() userInfo: UserInfoFromToken,
+		@Query('name') name: string,
+		@Query('bucketName') bucketName = 'coderhow'
+	) {
+		return this.userService.uploadAvatar(userInfo, name, bucketName);
 	}
 
 	@Get(':id')

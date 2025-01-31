@@ -47,7 +47,7 @@ export class TagService {
 
 	async removeTagFromArticle(tagId: string, articleId: string) {
 		if (!(await this.tagIsOwned(articleId, tagId))) return;
-		// FIXME delete竟然会报错
+		// FIXME delete报错，deleteMany不会，1. prisma schema配置问题(内部类型校验) 2. where条件被prisma认为无法唯一确定一条记录
 		return await this.dbService.article_tag.deleteMany({
 			where: {
 				tag_id: +tagId,
@@ -84,7 +84,7 @@ export class TagService {
 		//1. 查找TagList中有无新标签，有则新建
 		//2. 把每个tag映射成content + id的形式
 		// 没有标签的情况
-		if (taglist.length === 0) return;
+		if (taglist.length === 0) return [];
 		const readyTaglist = [];
 		for (const tagContent of taglist) {
 			//标签是否存在

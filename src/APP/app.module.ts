@@ -43,6 +43,12 @@ import { AppService } from './app.service';
 			provide: APP_PIPE,
 			useClass: ValidationPipe
 		}
+		// {
+		// 	provide: APP_PIPE,
+		// 	useFactory() {
+		// 		return new ValidationPipe({ transform: true });
+		// 	}
+		// }
 	]
 })
 export class AppModule {}

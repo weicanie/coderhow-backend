@@ -48,7 +48,7 @@ export class TagController {
 	})
 	@Get()
 	async getTagList(@Query() pageInfo: { page: number; pageSize: number }) {
-		const { page, pageSize } = pageInfo;
+		const { page = 1, pageSize = 7 } = pageInfo;
 		return await this.tagService.getTagList(page, pageSize);
 	}
 	@ApiBearerAuth('bearer')

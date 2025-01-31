@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import * as Minio from 'minio';
 import { OssController } from './oss.controller';
+import { OssService } from './oss.service';
 
 @Global()
 @Module({
@@ -18,8 +19,9 @@ import { OssController } from './oss.controller';
 				});
 				return client;
 			}
-		}
+		},
+		OssService
 	],
-	exports: ['OSS-CLIENT']
+	exports: ['OSS-CLIENT', OssService]
 })
 export class OssModule {}

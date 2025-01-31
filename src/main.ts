@@ -4,11 +4,11 @@ import * as dotenv from 'dotenv';
 import { AppModule } from './APP/app.module';
 async function bootstrap() {
 	dotenv.config();
-	//TODO 开启跨域
-	//TODO 前端大文件上传OSS
+	//TODO app.enableCors();默认全接受？
 	//TODO docker版
 	//TODO 整合chat后端
 	const app = await NestFactory.create(AppModule);
+	app.enableCors();
 	const config = new DocumentBuilder()
 		.setTitle('coderhow backend 接口文档')
 		.setDescription('coderhow backend 接口文档')

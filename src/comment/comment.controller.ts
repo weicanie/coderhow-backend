@@ -4,7 +4,6 @@ import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { CommentService } from './comment.service';
 import { CommentDto } from './dto/res.comment.dto';
-
 @Controller('comment')
 export class CommentController {
 	constructor(private readonly commentService: CommentService) {}
@@ -30,13 +29,42 @@ export class CommentController {
 	})
 	@Post(':articleId/:commentId')
 	@RequireLogin()
-	async addComment(
+	async addChildComment(
 		@Body('content') content: string,
 		@Param('articleId') articleId: string,
 		@Param('commentId') commentId: string,
 		@UserInfo() userInfo: UserInfoFromToken
 	) {
 		return await this.commentService.addComment(content, articleId, commentId, userInfo.userId);
+	}
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: CommentDto
+	})
+	@ApiBody({
+		type: String
+	})
+	@ApiParam({
+		name: 'articleId',
+		type: String,
+		required: true,
+		example: '1'
+	})
+	@ApiParam({
+		name: 'commentId',
+		type: String,
+		required: true,
+		example: '1'
+	})
+	@Post(':articleId')
+	@RequireLogin()
+	async addComment(
+		@Body('content') content: string,
+		@Param('articleId') articleId: string,
+		@UserInfo() userInfo: UserInfoFromToken
+	) {
+		return await this.commentService.addComment(content, articleId, '', userInfo.userId);
 	}
 	@ApiResponse({
 		status: HttpStatus.OK,

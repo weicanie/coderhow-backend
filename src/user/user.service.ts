@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 // import { DbService } from '../db/db.service';
 import { DbService } from '../DB/db.service';
+import { OssService } from '../OSS/oss.service';
 import { UserInfoFromToken } from '../types';
 import { passwordEncrypt } from '../utils';
 import { UserInfoDto } from './dto/user-info.dto';
@@ -16,7 +17,9 @@ export class UserService {
 		@Inject(DbService)
 		private readonly dbService: DbService,
 		@Inject(JwtService)
-		private readonly JwtService: JwtService
+		private readonly JwtService: JwtService,
+		@Inject(OssService)
+		private readonly ossService: OssService
 	) {}
 	async createUser(userInfo: UserInfoDto) {
 		let { username, password } = userInfo;
@@ -109,8 +112,23 @@ export class UserService {
 		return res;
 	}
 
+	async uploadAvatar(userInfo: UserInfoFromToken, name: string, bucketName = 'coderhow') {
+		// 防重复
+		name = userInfo.username + name;
+		const url = await this.ossService.presignedPutObject(name, bucketName);
+		await this.dbService.user.update({
+			data: {
+				avatar_url: `${process.env.OSS_SERVER_URL}/${bucketName}/${name}`
+			},
+			where: {
+				id: +userInfo.userId
+			}
+		});
+		return url;
+	}
+
 	async getUserInfo(userId: string) {
-		const value = this.dbService.user.findUnique({
+		const value = await this.dbService.user.findUnique({
 			where: {
 				id: +userId
 			},

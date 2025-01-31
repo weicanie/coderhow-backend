@@ -9,7 +9,9 @@ export class CommentService {
 		private aichatService: AichatService
 	) {}
 	async addComment(content: string, articleId: string, commentId: string, userId: string) {
-		const prompt = `
+		// TODO (额外)不应该情感分析后才返回,会降低评论响应速度
+		// 使用定时的批处理替代单次处理
+		/* 		const prompt = `
 		评论:${content}
 		记这条评论为c
 		1.给出c的情感激烈程度,
@@ -27,8 +29,12 @@ export class CommentService {
 		答案只包含c的情感激烈程度数字a和c的情感倾向b,格式是"a,b"
 		`;
 		const emotionAns: string = await this.aichatService.getAnswerFromAI(prompt, []);
-		const value = emotionAns.match(/^\d(?=,)/g)[0];
-		const judge = emotionAns.match(/(?<=,)\d$/g)[0];
+		const valueRes = emotionAns.match(/^\d(?=,)/g);
+		const judgeRes = emotionAns.match(/(?<=,)\d$/g);
+		const value = valueRes ? valueRes[0] : -1;
+		const judge = judgeRes ? judgeRes[0] : -1; */
+		const judge = -1;
+		const value = -1;
 		if (commentId) {
 			//子评论
 			return await this.dbservice.comment.create({

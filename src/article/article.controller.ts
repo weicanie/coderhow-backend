@@ -7,7 +7,8 @@ import {
 	Param,
 	ParseIntPipe,
 	Patch,
-	Post
+	Post,
+	Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
@@ -34,21 +35,31 @@ export class ArticleController {
 		const { userId } = userInfo;
 		return await this.articleService.addArticle(title, content, userId, taglist);
 	}
+
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: Object
+		type: ArticleResDto
 	})
-	@ApiParam({
-		name: 'articleId',
-		type: String,
-		required: true,
-		example: '1'
+	@ApiBody({
+		type: ArticleDto
 	})
-	@Get(`/:articleId`)
-	async getArticleDetail(@Param('articleId') articleId: string) {
-		return await this.articleService.getArticleDetail(articleId);
+	@Post('images/:articleId')
+	@RequireLogin()
+	async uploadArticleImages(
+		@Body() imageNamesObj: { imageNames: string[] },
+		@UserInfo() userInfo: UserInfoFromToken,
+		@Param('articleId') articleId: number,
+		@Query('bucketname') bucketName = 'coderhow'
+	) {
+		console.log('🚀 ~ ArticleController ~ articleId:', articleId);
+		return await this.articleService.uploadArticleImages(
+			imageNamesObj.imageNames,
+			articleId,
+			bucketName
+		);
 	}
+
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: Object
@@ -65,13 +76,29 @@ export class ArticleController {
 		required: true,
 		example: '1'
 	})
-	@Get(`/:page/:pageSize`)
+	@Get(`list/:page/:pageSize`)
 	async getArticleList(
 		@Param('page', ParseIntPipe) page: number,
 		@Param('pageSize', ParseIntPipe) pageSize: number
 	) {
 		return await this.articleService.getArticleList(page, pageSize);
 	}
+	@ApiBearerAuth('bearer')
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: Object
+	})
+	@ApiParam({
+		name: 'articleId',
+		type: String,
+		required: true,
+		example: '1'
+	})
+	@Get(`/:articleId`) // *路由会从上到下匹配，因此 getArticleDetail 应该在 getArticleList 后。
+	async getArticleDetail(@Param('articleId') articleId: string) {
+		return await this.articleService.getArticleDetail(articleId);
+	}
+
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,

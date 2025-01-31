@@ -21,6 +21,9 @@ export class IsLoginGuard implements CanActivate {
 		// jwt鉴定token,并提取用户信息
 		const request = context.switchToHttp().getRequest<MyRequest>();
 		let token: string = request.headers.authorization;
+		if (!token) {
+			throw new UnauthorizedException('token未携带');
+		}
 		token = token.replace('Bearer ', '');
 		let userInfo: UserInfoFromToken;
 		try {

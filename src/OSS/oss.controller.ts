@@ -1,11 +1,10 @@
-import { Controller, Get, HttpStatus, Inject, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import * as Minio from 'minio';
 import { RequireLogin } from '../decorator';
+import { OssService } from './oss.service';
 @Controller('oss')
 export class OssController {
-	@Inject('OSS-CLIENT')
-	private ossClient: Minio.Client;
+	constructor(private ossService: OssService) {}
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -17,9 +16,26 @@ export class OssController {
 		required: true,
 		example: 'mmk.png'
 	})
+	@ApiQuery({
+		name: 'name',
+		type: String,
+		required: true,
+		example: 'mmk.png'
+	})
+	@ApiQuery({
+		name: 'bucketName',
+		type: String
+	})
 	@RequireLogin()
 	@Get('presignedUrl')
-	async presignedPutObject(@Query('name') name: string) {
-		return await this.ossClient.presignedPutObject('coderhow', name, 3600); // 桶名、对象名、预签名URL过期时间
+	async presignedPutObject(
+		@Query('name') name: string,
+		@Query('bucketName') bucketName = 'coderhow'
+	) {
+		try {
+			return await this.ossService.presignedPutObject(name, bucketName); // 桶名、对象名、预签名URL过期时间
+		} catch (error) {
+			console.log('OssController ~ presignedPutObject ~ error:', error);
+		}
 	}
 }

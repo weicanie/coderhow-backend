@@ -2,8 +2,6 @@ import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
 import { ApiParam, ApiResponse } from '@nestjs/swagger';
 import { ImagesDto } from './dto/res.imges.dto';
 import { FileService } from './file.service';
-//TODO 路由已变，改前端
-//TODO 前端改为直传OSS (article_image表改为只提供URL)
 @Controller('file')
 export class FileController {
 	constructor(private readonly fileService: FileService) {}
