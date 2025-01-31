@@ -155,7 +155,16 @@ export class ArticleService {
 				content: articleTag.tag.content
 			}))
 		}));
-
+		transformedArticles.forEach(transformedArticle => {
+			if (!(transformedArticle.imagelist?.length > 0)) {
+				transformedArticle.imagelist = [
+					{
+						id: -1,
+						image_url: process.env.DEFAUT_IMGURL
+					}
+				];
+			}
+		});
 		return transformedArticles;
 	}
 	async getArticleDetail(articleId: string) {
@@ -220,7 +229,7 @@ export class ArticleService {
 				id: +articleId
 			}
 		});
-		const transformedArticles = {
+		const transformedArticle = {
 			id: articleSelf.id,
 			title: articleSelf.title,
 			content: articleSelf.content,
@@ -254,6 +263,15 @@ export class ArticleService {
 				content: articleTag.tag.content
 			}))
 		};
-		return transformedArticles;
+
+		if (!(transformedArticle.imagelist?.length > 0)) {
+			transformedArticle.imagelist = [
+				{
+					id: -1,
+					image_url: process.env.DEFAUT_IMGURL
+				}
+			];
+		}
+		return transformedArticle;
 	}
 }
