@@ -41,17 +41,6 @@ model article {
   @@index([user_id], map: "user_id")
 }
 
-// model article_image {
-//   id         Int       @id @default(autoincrement())
-//   filename   String    @db.VarChar(100)
-//   mime_type  String    @db.VarChar(50)
-//   size       Int?
-//   create_at  DateTime? @default(now()) @db.Timestamp(0)
-//   article_id Int
-//   article    article   @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "article_image_ibfk_1")
-
-//   @@index([article_id], map: "article_id")
-// }
 model article_image {
   id         Int       @id @default(autoincrement())
   image_url  String    @db.VarChar(100)
@@ -72,18 +61,6 @@ model article_tag {
 
   @@id([article_id, tag_id])
   @@index([tag_id], map: "tag_id")
-}
-
-model avatar {
-  id        Int       @id @default(autoincrement())
-  filename  String    @db.VarChar(100)
-  mime_type String    @db.VarChar(50)
-  size      Int?
-  create_at DateTime? @default(now()) @db.Timestamp(0)
-  user_id   Int
-  user      user      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "avatar_ibfk_1")
-
-  @@index([user_id], map: "user_id")
 }
 
 model comment {
@@ -115,15 +92,90 @@ model tag {
 }
 
 model user {
-  id              Int               @id @default(autoincrement())
-  username        String            @unique(map: "username") @db.VarChar(50)
-  password        String            @db.VarChar(500)
-  avatar_url      String?           @db.VarChar(100)
-  create_at       DateTime?         @default(now()) @db.Timestamp(0)
-  update_at       DateTime?         @default(now()) @db.Timestamp(0)
-  sign            String?           @db.VarChar(255)
-  ai_conversation ai_conversation[]
-  article         article[]
-  avatar          avatar[]
-  comment         comment[]
+  id                                   Int               @id @default(autoincrement())
+  username                             String            @unique(map: "username") @db.VarChar(50)
+  password                             String            @db.VarChar(500)
+  avatar_url                           String?           @db.VarChar(100)
+  create_at                            DateTime?         @default(now()) @db.Timestamp(0)
+  update_at                            DateTime?         @default(now()) @db.Timestamp(0)
+  sign                                 String?           @db.VarChar(255)
+  nickName                             String            @db.VarChar(100)
+  email                                String            @db.VarChar(100)
+  ai_conversation                      ai_conversation[]
+  article                              article[]
+  chatRecord                           chatRecord[]
+  comment                              comment[]
+  favorite                             favorite[]
+  friendship_friendship_userIdTouser   friendship[]      @relation("friendship_userIdTouser")
+  friendship_friendship_friendIdTouser friendship[]      @relation("friendship_friendIdTouser")
+  user_chatroom                        user_chatroom[]
+}
+
+model chatRecord {
+  id         Int        @id @default(autoincrement())
+  content    String     @db.VarChar(500)
+  type       Int
+  chatroomId Int
+  senderId   Int
+  create_at  DateTime   @default(now()) @db.DateTime(0)
+  update_at  DateTime   @default(now()) @db.DateTime(0)
+  chatroom   chatroom   @relation(fields: [chatroomId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chatRecord_ibfk_1")
+  user       user       @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chatRecord_ibfk_2")
+  favorite   favorite[]
+
+  @@index([chatroomId], map: "chatroomId")
+  @@index([senderId], map: "senderId")
+}
+
+model chatroom {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(50)
+  type          Boolean         @default(false)
+  create_at     DateTime        @default(now()) @db.DateTime(0)
+  update_at     DateTime        @default(now()) @db.DateTime(0)
+  chatRecord    chatRecord[]
+  user_chatroom user_chatroom[]
+}
+
+model favorite {
+  id           Int        @id @default(autoincrement())
+  chatRecordId Int
+  userId       Int
+  create_at    DateTime   @default(now()) @db.DateTime(0)
+  update_at    DateTime   @default(now()) @db.DateTime(0)
+  chatRecord   chatRecord @relation(fields: [chatRecordId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "favorite_ibfk_1")
+  user         user       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "favorite_ibfk_2")
+
+  @@index([chatRecordId], map: "chatRecordId")
+  @@index([userId], map: "userId")
+}
+
+model friendRequest {
+  id        Int      @id @default(autoincrement())
+  from      Int
+  to        Int
+  reason    String   @db.VarChar(100)
+  status    Int
+  create_at DateTime @default(now()) @db.DateTime(0)
+  update_at DateTime @default(now()) @db.DateTime(0)
+}
+
+model friendship {
+  userId                         Int
+  friendId                       Int
+  user_friendship_userIdTouser   user @relation("friendship_userIdTouser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "friendship_ibfk_1")
+  user_friendship_friendIdTouser user @relation("friendship_friendIdTouser", fields: [friendId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "friendship_ibfk_2")
+
+  @@id([userId, friendId])
+  @@index([friendId], map: "friendId")
+}
+
+model user_chatroom {
+  userId     Int
+  chatroomId Int
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_chatroom_ibfk_1")
+  chatroom   chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_chatroom_ibfk_2")
+
+  @@id([userId, chatroomId])
+  @@index([chatroomId], map: "chatroomId")
 }

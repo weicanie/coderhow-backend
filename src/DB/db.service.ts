@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class DbService extends PrismaClient implements OnModuleInit {
@@ -12,13 +12,13 @@ export class DbService extends PrismaClient implements OnModuleInit {
 	// 		]
 	// 	});
 	// }
-
+	private logger = new Logger();
 	async onModuleInit() {
 		try {
 			await this.$connect();
-			console.log('数据库连接成功');
+			this.logger.log('mysql数据库连接成功', 'DbService');
 		} catch (error) {
-			console.log('数据库连接失败', error);
+			this.logger.error(error, DbService);
 		}
 	}
 }

@@ -10,16 +10,24 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiOperation,
+	ApiParam,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
 import { RequireLogin, RequirePermission, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { ArticleService } from './article.service';
 import { ArticleDto } from './dto/article.dto';
 import { ArticleResDto } from './dto/res.article.dto';
-
+@ApiTags('文章')
 @Controller('article')
 export class ArticleController {
 	constructor(private readonly articleService: ArticleService) {}
+	@ApiOperation({ summary: '上传文章' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -35,7 +43,7 @@ export class ArticleController {
 		const { userId } = userInfo;
 		return await this.articleService.addArticle(title, content, userId, taglist);
 	}
-
+	@ApiOperation({ summary: '给上传的文章添加配图' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -52,14 +60,13 @@ export class ArticleController {
 		@Param('articleId') articleId: number,
 		@Query('bucketname') bucketName = 'coderhow'
 	) {
-		console.log('🚀 ~ ArticleController ~ articleId:', articleId);
 		return await this.articleService.uploadArticleImages(
 			imageNamesObj.imageNames,
 			articleId,
 			bucketName
 		);
 	}
-
+	@ApiOperation({ summary: '获取文章列表' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: Object
@@ -83,6 +90,7 @@ export class ArticleController {
 	) {
 		return await this.articleService.getArticleList(page, pageSize);
 	}
+	@ApiOperation({ summary: '获取文章详情' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -98,7 +106,7 @@ export class ArticleController {
 	async getArticleDetail(@Param('articleId') articleId: string) {
 		return await this.articleService.getArticleDetail(articleId);
 	}
-
+	@ApiOperation({ summary: '删除文章' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -116,6 +124,7 @@ export class ArticleController {
 	async removeArticle(@Param('articleId') articleId: string) {
 		return await this.articleService.removeArticle(articleId);
 	}
+	@ApiOperation({ summary: '修改文章' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,

@@ -1,10 +1,12 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, HttpStatus, Logger, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { RequireLogin } from '../decorator';
 import { OssService } from './oss.service';
 @Controller('oss')
 export class OssController {
 	constructor(private ossService: OssService) {}
+	private logger = new Logger();
+	@ApiOperation({ summary: 'get presignedURL of a object(file) to upload to OSS' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -35,7 +37,7 @@ export class OssController {
 		try {
 			return await this.ossService.presignedPutObject(name, bucketName); // 桶名、对象名、预签名URL过期时间
 		} catch (error) {
-			console.log('OssController ~ presignedPutObject ~ error:', error);
+			this.logger.error(error, 'OssController ~ presignedPutObject');
 		}
 	}
 }

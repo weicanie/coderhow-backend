@@ -18,6 +18,6 @@ const UserInfo = createParamDecorator((param: string, ctx: ExecutionContext) => 
 	if (!request.userInfo) {
 		return null;
 	}
-	return request.userInfo;
+	return param ? request.userInfo[param] : request.userInfo;
 });
 export { RequireLogin, RequirePermission, UserInfo };

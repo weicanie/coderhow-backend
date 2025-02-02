@@ -61,7 +61,7 @@ export class CommentService {
 		}
 	}
 
-	async getCommentCount(articleId: string) {
+	async getCommentDetail(articleId: string) {
 		const statement = `SELECT 
         m.id id, m.content content, m.create_at create_at, m.update_at update_at, 
         JSON_OBJECT('user_id',u.id, 'username', u.username) user,

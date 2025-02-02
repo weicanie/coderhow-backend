@@ -10,8 +10,8 @@ async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 	app.enableCors();
 	const config = new DocumentBuilder()
-		.setTitle('coderhow backend 接口文档')
-		.setDescription('coderhow backend 接口文档')
+		.setTitle('chathub backend 接口文档')
+		.setDescription('chathub backend 接口文档')
 		.setVersion('1.0')
 		.addBearerAuth({
 			type: 'http',
@@ -21,6 +21,6 @@ async function bootstrap() {
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
 	SwaggerModule.setup('doc', app, document);
-	await app.listen(process.env.PORT ?? 3000);
+	await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

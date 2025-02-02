@@ -1,16 +1,16 @@
 import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequireLogin, UserInfo } from '../decorator';
 import { UserInfoFromToken } from '../types';
 import { AichatService } from './aichat.service';
 import { ConversationDto } from './dto/conversation.dto';
 import { QuestionDtoDto } from './dto/question.dto';
 import { AiConversationDto } from './dto/res.aiconversation.dto';
-
+@ApiTags('AI助手')
 @Controller('aichat')
 export class AichatController {
 	constructor(private readonly aichatService: AichatService) {}
-	@ApiOperation({ summary: 'getAnswer', description: 'getAnswer' })
+	@ApiOperation({ summary: '获取答复', description: 'getAnswer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: String
@@ -23,7 +23,7 @@ export class AichatController {
 		const { question, messages } = questionDtoDto;
 		return await this.aichatService.getAnswerFromAI(question, messages);
 	}
-	@ApiOperation({ summary: 'storeConversation', description: 'storeConversation' })
+	@ApiOperation({ summary: '储存对话', description: 'storeConversation' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -40,7 +40,7 @@ export class AichatController {
 	) {
 		return await this.aichatService.storeConversation(userInfo, conversationDto);
 	}
-	@ApiOperation({ summary: 'getConversationList', description: 'getConversationList' })
+	@ApiOperation({ summary: '获取对话列表', description: 'getConversationList' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,

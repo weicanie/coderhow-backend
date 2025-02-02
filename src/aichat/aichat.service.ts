@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { DbService } from '../DB/db.service';
@@ -13,7 +13,7 @@ export class AichatService {
 			baseURL: 'https://api.chatanywhere.tech'
 		});
 	}
-
+	private logger = new Logger();
 	async getSummaryFromAI(title: string, content: string) {
 		try {
 			const prompt = `
@@ -29,7 +29,7 @@ export class AichatService {
 			});
 			return response.choices[0].message.content;
 		} catch (error) {
-			console.error('getAnswer error :', error);
+			this.logger.error(error, 'AichatService', 'getSummaryFromAI');
 		}
 	}
 
@@ -49,10 +49,9 @@ export class AichatService {
 				max_tokens: 2000, // 答案长短
 				n: 1 // 答案个数
 			});
-			// console.log(response.choices[0].message);
 			return response.choices[0].message.content;
 		} catch (error) {
-			console.error('getAnswer error :', error);
+			this.logger.error(error, 'AichatService', 'getAnswerFromAI');
 		}
 		function sliceMessages(messages: string[]) {
 			if (!(messages?.length > 2)) return messages;

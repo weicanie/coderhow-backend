@@ -9,14 +9,23 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
 import { RequireLogin, RequirePermission } from '../decorator';
 import { TagDto } from './dto/res.tag.dto';
 import { TagService } from './tag.service';
-
+@ApiTags('标签')
 @Controller('tag')
 export class TagController {
 	constructor(private readonly tagService: TagService) {}
+	@ApiOperation({ summary: '添加标签' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -30,6 +39,7 @@ export class TagController {
 	async addTag(@Body('content') content: string) {
 		return await this.tagService.addTag(content);
 	}
+	@ApiOperation({ summary: '获取标签列表' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: Array<TagDto>
@@ -51,6 +61,7 @@ export class TagController {
 		const { page = 1, pageSize = 7 } = pageInfo;
 		return await this.tagService.getTagList(page, pageSize);
 	}
+	@ApiOperation({ summary: '给文章添加标签' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -71,6 +82,7 @@ export class TagController {
 	async addTagToArticle(@Param('articleId') articleId: string, @Body('tag') taglist: string[]) {
 		return await this.tagService.addTagToArticle(articleId, taglist);
 	}
+	@ApiOperation({ summary: '删除文章标签' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,

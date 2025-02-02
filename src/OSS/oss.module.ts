@@ -10,7 +10,7 @@ import { OssService } from './oss.service';
 		{
 			provide: 'OSS-CLIENT',
 			async useFactory() {
-				const client = await new Minio.Client({
+				const client = new Minio.Client({
 					endPoint: 'localhost',
 					port: 9000,
 					useSSL: false,
