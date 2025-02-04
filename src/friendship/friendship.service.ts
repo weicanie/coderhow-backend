@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { WeiSum } from '../chat-history/chat-history.service';
 import { DbService } from '../DB/db.service';
+import { resBundle } from '../utils';
 import { FriendAddDto } from './dto/friend-add.dto';
 type FromUser = {
 	create_at: Date;
@@ -18,6 +19,35 @@ type ToUser = {
 	email: string;
 	avatar_url: string;
 };
+type FirendRequestList<T1, T2> = {
+	toMe: WeiSum<
+		T1,
+		{
+			fromUser: FromUser;
+		}
+	>[];
+	fromMe: WeiSum<
+		T2,
+		{
+			toUser: ToUser;
+		}
+	>[];
+};
+type GroupFriendlist<T> = {
+	name: string;
+	online_counts: number;
+	friend: T;
+};
+// TODO 用户自定义分组功能
+// 重新设计表, 用户-->好友组-->好友
+// TODO 其它CRUD功能,如好友备注
+enum friendGroupName {
+	default = '我的好友',
+	friend = '朋友',
+	family = '家人',
+	schoolmate = '同学',
+	favorite = '特别关心'
+}
 @Injectable()
 export class FriendshipService {
 	@Inject(DbService)
@@ -47,8 +77,28 @@ export class FriendshipService {
 		if (found.length) {
 			throw new BadRequestException('该好友已经添加过');
 		}
-
-		return await this.dbService.friendRequest.create({
+		// TODO 先直接添加成功
+		await this.dbService.friendship.create({
+			data: {
+				userId,
+				friendId: friend.id
+			}
+		});
+		await this.dbService.friendGroup.create({
+			data: {
+				userId,
+				friendId: friend.id,
+				name: friendGroupName.default
+			}
+		});
+		await this.dbService.friendGroup.create({
+			data: {
+				userId: friend.id,
+				friendId: userId,
+				name: friendGroupName.default
+			}
+		});
+		await this.dbService.friendRequest.create({
 			data: {
 				from: userId,
 				to: friend.id,
@@ -56,6 +106,7 @@ export class FriendshipService {
 				status: 0 //待定
 			}
 		});
+		return resBundle<string>('好友添加成功');
 	}
 	//获取用户发送和接收到的好友请求
 	async list(userId: number) {
@@ -70,20 +121,7 @@ export class FriendshipService {
 				to: userId
 			}
 		});
-		const res: {
-			toMe: WeiSum<
-				(typeof toMeRequest)[0],
-				{
-					fromUser: FromUser;
-				}
-			>[];
-			fromMe: WeiSum<
-				(typeof toMeRequest)[0],
-				{
-					toUser: ToUser;
-				}
-			>[];
-		} = {
+		const res: FirendRequestList<(typeof toMeRequest)[0], (typeof toMeRequest)[0]> = {
 			toMe: [],
 			fromMe: []
 		};
@@ -175,7 +213,7 @@ export class FriendshipService {
 		return '已拒绝';
 	}
 	//获取用户的所有好友
-	async getFriendship(userId: number, name: string) {
+	async getFriendlist(userId: number) {
 		const friends = await this.dbService.friendship.findMany({
 			where: {
 				//同意好友请求时,只添加一个方向的二元组
@@ -198,11 +236,13 @@ export class FriendshipService {
 
 		const friendIds = [...set].filter(item => item !== userId);
 
-		const res: {
+		const friendlist: {
 			id: number;
 			username: string;
 			nickName: string;
 			email: string;
+			group: string;
+			online_status: string;
 		}[] = [];
 
 		for (let i = 0; i < friendIds.length; i++) {
@@ -214,15 +254,100 @@ export class FriendshipService {
 					id: true,
 					username: true,
 					nickName: true,
-					email: true
+					email: true,
+					online_status: true
 				}
 			});
-			res.push(user);
+			const group = await this.dbService.friendGroup.findMany({
+				where: {
+					userId,
+					friendId: user.id
+				},
+				select: {
+					name: true
+				}
+			});
+			friendlist.push({ ...user, group: group[0].name });
 		}
-
-		return res.filter((item: { id: number; username: string; nickName: string; email: string }) =>
-			item.nickName.includes(name)
+		const tFriendlist: GroupFriendlist<typeof friendlist>[] = [];
+		const groups = [
+			friendGroupName.default,
+			friendGroupName.family,
+			friendGroupName.favorite,
+			friendGroupName.friend,
+			friendGroupName.schoolmate
+		];
+		for (let group of groups) {
+			const groupFriendlist = friendlist.filter(friend => friend.group === group);
+			tFriendlist.push({
+				name: friendGroupName.default,
+				online_counts: groupFriendlist.filter(friend => friend.online_status === 'online').length,
+				friend: groupFriendlist
+			});
+		}
+		return tFriendlist;
+	}
+	async getFriend(userId: number, name: string) {
+		const friendId = await this.dbService.user.findUnique({
+			where: {
+				username: name
+			},
+			select: {
+				id: true
+			}
+		});
+		const group = await this.dbService.friendGroup.findFirst({
+			where: {
+				userId,
+				friendId: friendId.id
+			},
+			select: {
+				name: true
+			}
+		});
+		const tFriendlist = await this.getFriendlist(userId);
+		const groupFriendlist = tFriendlist.filter(
+			groupFriendlist => groupFriendlist.name === group.name
 		);
+		const friend = groupFriendlist[0].friend.filter(
+			friend => friend.nickName === name || friend.username === name
+		);
+
+		return resBundle<(typeof friend)[0]>(friend[0]);
+	}
+	async getFriendById(userId: number, name: string) {
+		const friendInfo = await this.dbService.user.findUnique({
+			where: {
+				username: name
+			},
+			select: {
+				id: true,
+				avatar_url: true,
+				sign: true
+			}
+		});
+		const group = await this.dbService.friendGroup.findFirst({
+			where: {
+				userId,
+				friendId: friendInfo.id
+			},
+			select: {
+				name: true
+			}
+		});
+		const tFriendlist = await this.getFriendlist(userId);
+		const groupFriendlist = tFriendlist.filter(
+			groupFriendlist => groupFriendlist.name === group.name
+		);
+		const friend = groupFriendlist[0].friend.filter(
+			friend => friend.nickName === name || friend.username === name
+		);
+		const tFriend = {
+			...friend[0],
+			avatar: friendInfo.avatar_url,
+			signature: friendInfo.sign
+		};
+		return resBundle<typeof tFriend>(tFriend);
 	}
 	async remove(friendId: number, userId: number) {
 		await this.dbService.friendship.deleteMany({

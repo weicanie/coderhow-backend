@@ -94,6 +94,19 @@ export class UserController {
 	async login(@Body() loginUser: LoginUserDto) {
 		return await this.userService.login(loginUser);
 	}
+	@ApiOperation({ summary: 'User logout' })
+	@ApiBody({
+		description: 'User login information',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: UserInfoResDto
+	})
+	@Post('logout')
+	async logout(@Body('username') username: string) {
+		return await this.userService.logout(username);
+	}
 
 	@Get(':id')
 	@ApiOperation({ summary: 'Get user information by ID' })
@@ -122,20 +135,6 @@ export class UserController {
 	})
 	async getInfoByName(@Query('username') username: string) {
 		return this.userService.findUserDetailByName(username);
-	}
-	@RequireLogin()
-	@Patch('uploadsign')
-	@ApiOperation({ summary: 'Upload user signature' })
-	@ApiBody({
-		description: 'User signature to upload',
-		type: String
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: Number
-	})
-	async uploadSign(@UserInfo() userInfo: UserInfoFromToken, @Body('sign') sign: string) {
-		return this.userService.uploadSign(userInfo, sign);
 	}
 
 	@RequireLogin()

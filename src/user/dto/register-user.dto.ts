@@ -6,9 +6,6 @@ export class RegisterUserDto {
 	})
 	username: string;
 
-	@IsNotEmpty({
-		message: '昵称不能为空'
-	})
 	nickName: string;
 
 	@IsNotEmpty({

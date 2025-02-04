@@ -5,7 +5,7 @@ import { DbService } from '../DB/db.service';
 import { OssService } from '../OSS/oss.service';
 import { RedisService } from '../REDIS/redis.service';
 import { UserInfoFromToken } from '../types';
-import { passwordEncrypt } from '../utils';
+import { passwordEncrypt, resBundle } from '../utils';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateUserEmailDto } from './dto/update-user-email.dto';
@@ -22,6 +22,7 @@ type UserInfo = {
 	nickName: string;
 	email: string;
 };
+// TODO 错误处理,映射表没安排上 (统一success, 免得客户端报错)
 @Injectable()
 export class UserService {
 	@Inject(RedisService)
@@ -58,12 +59,13 @@ export class UserService {
 		}
 		user.password = passwordEncrypt(user.password);
 		try {
-			return await this.dbService.user.create({
+			const userRes = await this.dbService.user.create({
 				data: {
 					username: user.username,
 					password: user.password,
-					nickName: user.nickName,
-					email: user.email
+					nickName: user.nickName ? user.nickName : user.username,
+					email: user.email,
+					online_status: 'online'
 				},
 				select: {
 					id: true,
@@ -74,8 +76,8 @@ export class UserService {
 					create_at: true
 				}
 			});
+			return resBundle<typeof userRes>(userRes);
 		} catch (e) {
-			// TODO 更新其它错误处理
 			this.logger.error(e, UserService);
 			return null;
 		}
@@ -93,15 +95,48 @@ export class UserService {
 		}
 		await this.pwdVerify(userInfo, loginUserDto.password);
 		const token = await this.tokenDispatch(userInfo, userInfo.id);
-		const res = await this.dbService.user.findUnique({
+		const userRes = await this.dbService.user.findUnique({
 			where: {
 				id: userInfo.id
 			}
 		});
-		delete res.password;
-		return { ...res, token };
+		delete userRes.password;
+		const tuser = {
+			avatar: userRes.avatar_url,
+			name: userRes.nickName,
+			status: true,
+			...userRes
+		};
+		await this.dbService.user.update({
+			where: {
+				username: loginUserDto.username
+			},
+			data: {
+				online_status: 'online'
+			}
+		});
+		return resBundle({ info: tuser, token });
 	}
+	async logout(username: string) {
+		const userInfo = await this.dbService.user.findUnique({
+			where: {
+				username
+			}
+		});
 
+		if (!userInfo) {
+			throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+		}
+		await this.dbService.user.update({
+			where: {
+				username
+			},
+			data: {
+				online_status: 'offline'
+			}
+		});
+		return resBundle('');
+	}
 	async pwdVerify(userInfo: UserInfo, password: string) {
 		if (userInfo.password !== passwordEncrypt(password)) {
 			throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
@@ -162,17 +197,7 @@ export class UserService {
 			status: true,
 			...user
 		}));
-		return {
-			code: 200,
-			data: tusers,
-			message: 'success'
-		};
-	}
-	async uploadSign(userInfo: UserInfoFromToken, sign: string) {
-		const { userId } = userInfo;
-		const res = await this.dbService
-			.$executeRaw`UPDATE user SET sign = ${sign} WHERE id = ${userId}`;
-		return res;
+		return resBundle(tusers);
 	}
 
 	async uploadAvatar(userInfo: UserInfoFromToken, name: string, bucketName = 'coderhow') {
@@ -191,7 +216,7 @@ export class UserService {
 	}
 
 	async updatePassword(passwordDto: UpdateUserPasswordDto) {
-		const captcha = await this.redisService.get(`update_password_captcha_${passwordDto.email}`);
+		/* 		const captcha = await this.redisService.get(`update_password_captcha_${passwordDto.email}`);
 
 		if (!captcha) {
 			throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
@@ -199,7 +224,7 @@ export class UserService {
 
 		if (passwordDto.captcha !== captcha) {
 			throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
-		}
+		} */
 
 		const { id: userId } = await this.dbService.user.findUnique({
 			where: {
@@ -219,7 +244,7 @@ export class UserService {
 					password: passwordDto.password
 				}
 			});
-			return '密码修改成功';
+			return resBundle('密码修改成功');
 		} catch (e) {
 			this.logger.error(e, UserService);
 			return '密码修改失败';
@@ -246,6 +271,9 @@ export class UserService {
 		if (updateUserDto.nickName) {
 			userInfo.nickName = updateUserDto.nickName;
 		}
+		if (updateUserDto.signature) {
+			userInfo.sign = updateUserDto.signature;
+		}
 		/* 		if (updateUserDto.avatar_url) {
 			userInfo.avatar_url = updateUserDto.avatar_url;
 		} */
@@ -260,10 +288,10 @@ export class UserService {
 			const tuser = {
 				avatar: user.avatar_url,
 				name: user.nickName,
-				status: true,
 				...user
 			};
-			return '用户信息修改成功';
+			const token = this.tokenDispatch(user, user.id);
+			return resBundle({ token, info: tuser });
 		} catch (e) {
 			this.logger.error(e, UserService);
 			return '用户信息修改成功';
@@ -298,7 +326,7 @@ export class UserService {
 				},
 				data: userInfo
 			});
-			return '邮箱修改成功';
+			return resBundle('邮箱修改成功');
 		} catch (e) {
 			this.logger.error(e, UserService);
 			return '邮箱修改失败';

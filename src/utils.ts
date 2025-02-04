@@ -3,4 +3,11 @@ function passwordEncrypt(password: string) {
 	const pwd = createHmac('sha256', process.env.ENC_SECRET).update(password).digest('hex');
 	return pwd;
 }
-export { passwordEncrypt };
+function resBundle<T = unknown>(data: T) {
+	return {
+		data,
+		message: 'success',
+		code: 200
+	};
+}
+export { passwordEncrypt, resBundle };

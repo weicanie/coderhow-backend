@@ -6,6 +6,7 @@ export interface UserInfoFromToken {
 }
 export interface MyRequest extends Request {
 	userInfo: UserInfoFromToken;
+	token: string;
 }
 export type VerifyMetaData = {
 	requireLogin?: boolean;
