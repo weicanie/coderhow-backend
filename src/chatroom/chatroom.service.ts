@@ -48,7 +48,28 @@ export class ChatroomService {
 		});
 		return id; // 聊天室id
 	}
-
+	async findgroup(name: string) {
+		const rooms = await this.dbService.chatroom.findMany({
+			where: {
+				name: {
+					contains: name
+				}
+			}
+		});
+		//TODO 实现未实现字段和加群逻辑(status=true代表已在群中)
+		const trooms = rooms.map(room => ({
+			group_id: room.id,
+			status: true,
+			avatar: '',
+			number: 0,
+			...rooms
+		}));
+		return {
+			code: 200,
+			data: trooms,
+			message: 'success'
+		};
+	}
 	async list(userId: number, name: string) {
 		const chatroomIds = await this.dbService.user_chatroom.findMany({
 			where: {
@@ -118,7 +139,7 @@ export class ChatroomService {
 				userId: true
 			}
 		});
-		const users = await this.dbService.user.findMany({
+		const rooms = await this.dbService.user.findMany({
 			where: {
 				id: {
 					in: userIds.map(item => item.userId)
@@ -133,7 +154,7 @@ export class ChatroomService {
 				email: true
 			}
 		});
-		return users;
+		return rooms;
 	}
 
 	async info(id: number) {
@@ -142,7 +163,7 @@ export class ChatroomService {
 				id
 			}
 		});
-		return { ...chatroom, users: await this.members(id) };
+		return { ...chatroom, rooms: await this.members(id) };
 	}
 
 	async join(id: number, username: string) {

@@ -14,7 +14,7 @@ export class RegisterUserDto {
 	@IsNotEmpty({
 		message: '密码不能为空'
 	})
-	@MinLength(6, {
+	@MinLength(0, {
 		message: '密码不能少于 6 位'
 	})
 	password: string;

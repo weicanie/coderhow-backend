@@ -5,6 +5,7 @@ import {
 	Get,
 	HttpStatus,
 	Inject,
+	Param,
 	Patch,
 	Post,
 	Query
@@ -33,7 +34,6 @@ import { UserService } from './user.service';
 @Controller('user')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
-
 	@Inject(EmailService)
 	private emailService: EmailService;
 	@Inject(JwtService)
@@ -92,20 +92,7 @@ export class UserController {
 	})
 	@Post('login')
 	async login(@Body() loginUser: LoginUserDto) {
-		const user = await this.userService.login(loginUser);
-
-		return {
-			user,
-			token: this.jwtService.sign(
-				{
-					userId: user.id,
-					username: user.username
-				},
-				{
-					expiresIn: '7d'
-				}
-			)
-		};
+		return await this.userService.login(loginUser);
 	}
 
 	@Get(':id')
@@ -119,9 +106,22 @@ export class UserController {
 		status: HttpStatus.OK,
 		type: UserInfoResDto
 	})
-	@RequireLogin()
-	async getInfo(@UserInfo('userId') userId: number) {
+	async getInfoById(@Param('id') userId: number) {
 		return this.userService.findUserDetailById(userId);
+	}
+	@Get()
+	@ApiOperation({ summary: 'Get user information by username', description: '使用模糊搜索' })
+	@ApiQuery({
+		name: 'username',
+		description: 'username of the user to retrieve information',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: UserInfoResDto
+	})
+	async getInfoByName(@Query('username') username: string) {
+		return this.userService.findUserDetailByName(username);
 	}
 	@RequireLogin()
 	@Patch('uploadsign')

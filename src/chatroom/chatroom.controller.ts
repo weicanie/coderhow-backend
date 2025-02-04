@@ -22,6 +22,15 @@ export class ChatroomController {
 	async group(@Query('name') name: string, @UserInfo('userId') userId: number) {
 		return await this.chatroomService.createGroupChatroom(name, userId);
 	}
+
+	@ApiOperation({ summary: 'find group  ' })
+	@Get('find-group')
+	@ApiQuery({ name: 'name', required: true })
+	@ApiResponse({ status: 200, description: 'Group chatroom created successfully' })
+	async findgroup(@Query('name') name: string, @UserInfo('userId') userId: number) {
+		return await this.chatroomService.findgroup(name);
+	}
+
 	@ApiOperation({ summary: 'get chatroom list of user ' })
 	@Get('list')
 	@ApiQuery({ name: 'name', required: false })

@@ -91,7 +91,7 @@ export class UserService {
 		if (!userInfo) {
 			throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
 		}
-		await this.pwdVerify(userInfo, userInfo.password);
+		await this.pwdVerify(userInfo, loginUserDto.password);
 		const token = await this.tokenDispatch(userInfo, userInfo.id);
 		const res = await this.dbService.user.findUnique({
 			where: {
@@ -102,9 +102,8 @@ export class UserService {
 		return { ...res, token };
 	}
 
-	async pwdVerify(userInfo: UserInfo, md5pwd: string) {
-		const { password } = userInfo;
-		if (md5pwd !== passwordEncrypt(password)) {
+	async pwdVerify(userInfo: UserInfo, password: string) {
+		if (userInfo.password !== passwordEncrypt(password)) {
 			throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -137,6 +136,37 @@ export class UserService {
 			}
 		});
 		return user;
+	}
+	async findUserDetailByName(username: string) {
+		const users = await this.dbService.user.findMany({
+			where: {
+				username: {
+					contains: username
+				}
+			},
+			select: {
+				id: true,
+				username: true,
+				nickName: true,
+				email: true,
+				avatar_url: true,
+				create_at: true,
+				update_at: true,
+				sign: true
+			}
+		});
+		//TODO 实现未实现字段和加好友逻辑(status=true代表已是好友)
+		const tusers = users.map(user => ({
+			avatar: user.avatar_url,
+			name: user.nickName,
+			status: true,
+			...user
+		}));
+		return {
+			code: 200,
+			data: tusers,
+			message: 'success'
+		};
 	}
 	async uploadSign(userInfo: UserInfoFromToken, sign: string) {
 		const { userId } = userInfo;
@@ -197,7 +227,7 @@ export class UserService {
 	}
 
 	async updateInfo(userId: number, updateUserDto: UpdateUserDto) {
-		const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
+		/* 		const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
 
 		if (!captcha) {
 			throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
@@ -205,7 +235,7 @@ export class UserService {
 
 		if (updateUserDto.captcha !== captcha) {
 			throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
-		}
+		} */
 
 		const userInfo = await this.dbService.user.findUnique({
 			where: {
@@ -216,17 +246,23 @@ export class UserService {
 		if (updateUserDto.nickName) {
 			userInfo.nickName = updateUserDto.nickName;
 		}
-		if (updateUserDto.avatar_url) {
+		/* 		if (updateUserDto.avatar_url) {
 			userInfo.avatar_url = updateUserDto.avatar_url;
-		}
+		} */
 
 		try {
-			await this.dbService.user.update({
+			const user = await this.dbService.user.update({
 				where: {
 					id: userId
 				},
 				data: userInfo
 			});
+			const tuser = {
+				avatar: user.avatar_url,
+				name: user.nickName,
+				status: true,
+				...user
+			};
 			return '用户信息修改成功';
 		} catch (e) {
 			this.logger.error(e, UserService);

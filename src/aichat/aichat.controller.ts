@@ -10,7 +10,7 @@ import { AiConversationDto } from './dto/res.aiconversation.dto';
 @Controller('aichat')
 export class AichatController {
 	constructor(private readonly aichatService: AichatService) {}
-	@ApiOperation({ summary: '获取答复', description: 'getAnswer' })
+	@ApiOperation({ summary: '获取答复' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: String
@@ -23,7 +23,7 @@ export class AichatController {
 		const { question, messages } = questionDtoDto;
 		return await this.aichatService.getAnswerFromAI(question, messages);
 	}
-	@ApiOperation({ summary: '储存对话', description: 'storeConversation' })
+	@ApiOperation({ summary: '储存对话' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -40,7 +40,7 @@ export class AichatController {
 	) {
 		return await this.aichatService.storeConversation(userInfo, conversationDto);
 	}
-	@ApiOperation({ summary: '获取对话列表', description: 'getConversationList' })
+	@ApiOperation({ summary: '获取对话列表' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,

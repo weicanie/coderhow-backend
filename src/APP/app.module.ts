@@ -53,16 +53,17 @@ import { AppService } from './app.service';
 			provide: APP_GUARD,
 			useClass: IsLoginGuard
 		},
-		{
-			provide: APP_PIPE,
-			useClass: ValidationPipe
-		}
 		// {
 		// 	provide: APP_PIPE,
-		// 	useFactory() {
-		// 		return new ValidationPipe({ transform: true });
-		// 	}
+		// 	useClass: ValidationPipe
 		// }
+		//* ValidationPipe默认不对参数进行自动类型转换, 手动设置{ transform: true }来开启（dto的属性也会转）
+		{
+			provide: APP_PIPE,
+			useFactory() {
+				return new ValidationPipe({ transform: true });
+			}
+		}
 	]
 })
 export class AppModule {}

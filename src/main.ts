@@ -9,6 +9,7 @@ async function bootstrap() {
 	//TODO 整合chat后端
 	const app = await NestFactory.create(AppModule);
 	app.enableCors();
+	// app.useGlobalPipes(new ValidationPipe({ transform: true }));
 	const config = new DocumentBuilder()
 		.setTitle('chathub backend 接口文档')
 		.setDescription('chathub backend 接口文档')
