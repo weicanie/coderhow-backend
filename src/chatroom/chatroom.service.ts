@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { WeiSum } from '../chat-history/chat-history.service';
 import { DbService } from '../DB/db.service';
+import { resBundle } from '../utils';
 
 @Injectable()
 export class ChatroomService {
@@ -56,19 +57,13 @@ export class ChatroomService {
 				}
 			}
 		});
-		//TODO 实现未实现字段和加群逻辑(status=true代表已在群中)
 		const trooms = rooms.map(room => ({
 			group_id: room.id,
-			status: true,
 			avatar: '',
 			number: 0,
 			...rooms
 		}));
-		return {
-			code: 200,
-			data: trooms,
-			message: 'success'
-		};
+		return resBundle(rooms);
 	}
 	async list(userId: number, name: string) {
 		const chatroomIds = await this.dbService.user_chatroom.findMany({

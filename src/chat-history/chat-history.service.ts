@@ -26,7 +26,6 @@ export class ChatHistoryService {
 			}
 		});
 		//为每条消息查询发送者
-		//TODO 更好的获取类型的方式
 		const res: WeiSum<(typeof history)[0], { sender: typeof this.dbService.user.findUnique }>[] =
 			[];
 		for (let i = 0; i < history.length; i++) {

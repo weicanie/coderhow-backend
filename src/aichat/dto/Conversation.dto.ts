@@ -4,7 +4,6 @@ import { IsNotEmpty } from 'class-validator';
 export class ConversationDto {
 	@IsNotEmpty()
 	@ApiProperty({ name: 'key' })
-	//FIXME 为什么类型没有转换（ValidationPipe）
 	@Type(() => String)
 	key: string;
 

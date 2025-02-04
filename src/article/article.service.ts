@@ -61,7 +61,6 @@ export class ArticleService {
 		});
 	}
 
-	// FIXME 为什么参数没有转为number
 	async getArticleList(page = 1, pageSize = 5) {
 		const articleSelfs = await this.dbService.article.findMany({
 			select: {

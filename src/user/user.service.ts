@@ -101,12 +101,6 @@ export class UserService {
 			}
 		});
 		delete userRes.password;
-		const tuser = {
-			avatar: userRes.avatar_url,
-			name: userRes.nickName,
-			status: true,
-			...userRes
-		};
 		await this.dbService.user.update({
 			where: {
 				username: loginUserDto.username
@@ -115,7 +109,7 @@ export class UserService {
 				online_status: 'online'
 			}
 		});
-		return resBundle({ info: tuser, token });
+		return resBundle({ ...userRes, token });
 	}
 	async logout(username: string) {
 		const userInfo = await this.dbService.user.findUnique({
@@ -135,7 +129,7 @@ export class UserService {
 				online_status: 'offline'
 			}
 		});
-		return resBundle('');
+		return resBundle('已退出登录');
 	}
 	async pwdVerify(userInfo: UserInfo, password: string) {
 		if (userInfo.password !== passwordEncrypt(password)) {
@@ -190,14 +184,7 @@ export class UserService {
 				sign: true
 			}
 		});
-		//TODO 实现未实现字段和加好友逻辑(status=true代表已是好友)
-		const tusers = users.map(user => ({
-			avatar: user.avatar_url,
-			name: user.nickName,
-			status: true,
-			...user
-		}));
-		return resBundle(tusers);
+		return resBundle(users);
 	}
 
 	async uploadAvatar(userInfo: UserInfoFromToken, name: string, bucketName = 'coderhow') {
@@ -285,13 +272,8 @@ export class UserService {
 				},
 				data: userInfo
 			});
-			const tuser = {
-				avatar: user.avatar_url,
-				name: user.nickName,
-				...user
-			};
 			const token = this.tokenDispatch(user, user.id);
-			return resBundle({ token, info: tuser });
+			return resBundle({ token, ...user });
 		} catch (e) {
 			this.logger.error(e, UserService);
 			return '用户信息修改成功';

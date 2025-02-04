@@ -77,27 +77,6 @@ export class FriendshipService {
 		if (found.length) {
 			throw new BadRequestException('该好友已经添加过');
 		}
-		// TODO 先直接添加成功
-		await this.dbService.friendship.create({
-			data: {
-				userId,
-				friendId: friend.id
-			}
-		});
-		await this.dbService.friendGroup.create({
-			data: {
-				userId,
-				friendId: friend.id,
-				name: friendGroupName.default
-			}
-		});
-		await this.dbService.friendGroup.create({
-			data: {
-				userId: friend.id,
-				friendId: userId,
-				name: friendGroupName.default
-			}
-		});
 		await this.dbService.friendRequest.create({
 			data: {
 				from: userId,
@@ -195,8 +174,24 @@ export class FriendshipService {
 					friendId
 				}
 			});
+			await this.dbService.friendGroup.create({
+				data: {
+					userId,
+					friendId,
+					name: friendGroupName.default
+				}
+			});
+			await this.dbService.friendGroup.create({
+				data: {
+					userId: friendId,
+					friendId: userId,
+					name: friendGroupName.default
+				}
+			});
+			return '添加成功';
+		} else {
+			return '已是好友';
 		}
-		return '添加成功';
 	}
 
 	async reject(friendId: number, userId: number) {
@@ -342,12 +337,7 @@ export class FriendshipService {
 		const friend = groupFriendlist[0].friend.filter(
 			friend => friend.nickName === name || friend.username === name
 		);
-		const tFriend = {
-			...friend[0],
-			avatar: friendInfo.avatar_url,
-			signature: friendInfo.sign
-		};
-		return resBundle<typeof tFriend>(tFriend);
+		return resBundle<(typeof friend)[0]>(friend[0]);
 	}
 	async remove(friendId: number, userId: number) {
 		await this.dbService.friendship.deleteMany({
