@@ -92,11 +92,11 @@ export class FriendshipController {
 		description: '获取好友列表'
 	})
 	@Get('list')
-	async getfriendlist(@UserInfo('userId') userId: number, @Query('name') name: string) {
+	async getfriendlist(@UserInfo('userId') userId: number) {
 		const res = await this.friendshipService.getFriendlist(userId);
 		return resBundle<typeof res>(res);
 	}
-	@ApiOperation({ summary: '获取好友列表' })
+	@ApiOperation({ summary: '获取好友' })
 	@ApiBearerAuth('bearer')
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -108,7 +108,7 @@ export class FriendshipController {
 		type: String,
 		description: '好友昵称或用户名'
 	})
-	@Get('list')
+	@Get('one')
 	async getfriend(@UserInfo('userId') userId: number, @Query('name') name: string) {
 		const res = await this.friendshipService.getFriend(userId, name);
 		return resBundle<typeof res>(res);
@@ -125,7 +125,7 @@ export class FriendshipController {
 		required: true,
 		description: '好友ID'
 	})
-	@Get('remove/:id')
+	@Post('remove/:id')
 	async remove(@Param('id') friendId: number, @UserInfo('userId') userId: number) {
 		return this.friendshipService.remove(friendId, userId);
 	}

@@ -11,6 +11,7 @@
       "run",
       "start:dev"
     ],
+    "console": "integratedTerminal",
     "runtimeExecutable": "npm",
     "skipFiles": [
       "<node_internals>/**"

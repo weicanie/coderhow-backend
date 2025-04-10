@@ -3,6 +3,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	HttpException,
 	HttpStatus,
 	Inject,
 	Param,
@@ -80,7 +81,13 @@ export class UserController {
 		});
 		return '发送成功';
 	}
-
+	@ApiOperation({ summary: 'search user by name (contain) ' })
+	@Get('search-user')
+	@ApiQuery({ name: 'name', required: true })
+	@ApiResponse({ status: 200, description: 'user found successfully' })
+	async searchUser(@Query('name') name: string) {
+		return await this.userService.searchUser(name);
+	}
 	@ApiOperation({ summary: 'User login' })
 	@ApiBody({
 		description: 'User login information',
@@ -120,6 +127,9 @@ export class UserController {
 		type: UserInfoResDto
 	})
 	async getInfoById(@Param('id') userId: number) {
+		if (!userId) {
+			throw new HttpException('请检查id', HttpStatus.BAD_REQUEST);
+		}
 		return this.userService.findUserDetailById(userId);
 	}
 	@Get()

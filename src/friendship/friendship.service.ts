@@ -67,6 +67,7 @@ export class FriendshipService {
 		if (friend.id === userId) {
 			throw new BadRequestException('不能添加自己为好友');
 		}
+
 		const found = await this.dbService.friendship.findMany({
 			where: {
 				userId,
@@ -250,7 +251,8 @@ export class FriendshipService {
 					username: true,
 					nickName: true,
 					email: true,
-					online_status: true
+					online_status: true,
+					avatar_url: true
 				}
 			});
 			const group = await this.dbService.friendGroup.findMany({
@@ -274,11 +276,13 @@ export class FriendshipService {
 		];
 		for (let group of groups) {
 			const groupFriendlist = friendlist.filter(friend => friend.group === group);
-			tFriendlist.push({
-				name: friendGroupName.default,
-				online_counts: groupFriendlist.filter(friend => friend.online_status === 'online').length,
-				friend: groupFriendlist
-			});
+			if (groupFriendlist.length > 0) {
+				tFriendlist.push({
+					name: friendGroupName.default,
+					online_counts: groupFriendlist.filter(friend => friend.online_status === 'online').length,
+					friend: groupFriendlist
+				});
+			}
 		}
 		return tFriendlist;
 	}

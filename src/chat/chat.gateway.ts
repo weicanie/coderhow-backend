@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatHistoryService } from 'src/chat-history/chat-history.service';
+import { AichatService } from '../aichat/aichat.service';
 import { UserService } from './../user/user.service';
 import { ChatService } from './chat.service';
 
@@ -23,9 +24,12 @@ interface SendMessagePayload {
 		content: string;
 	};
 }
+const aiId = 4;
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway {
+	@Inject(AichatService)
+	aichatService: AichatService;
 	constructor(private readonly chatService: ChatService) {}
 
 	@WebSocketServer() server: Server;
@@ -71,6 +75,29 @@ export class ChatGateway {
 			message: {
 				...history,
 				sender
+			}
+		});
+		let contentSend = payload.message.content.trimEnd();
+		if (!contentSend.endsWith('@ai')) return;
+		contentSend = contentSend.slice(0, contentSend.length - 3);
+		//* @ai 功能
+		//TODO 上下文功能
+		const answer = await this.aichatService.getAnswerFromAI(contentSend, []);
+
+		const history2 = await this.chatRecordService.add(payload.chatroomId, {
+			content: answer,
+			type: map['text'],
+			chatroomId: payload.chatroomId,
+			senderId: aiId
+		});
+		const sender2 = await this.userService.findUserDetailById(history2.senderId);
+
+		this.server.to(roomName).emit('message', {
+			type: 'sendMessage',
+			userId: aiId,
+			message: {
+				...history2,
+				sender: sender2
 			}
 		});
 	}

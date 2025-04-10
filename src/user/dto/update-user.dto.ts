@@ -1,7 +1,9 @@
+import { IsEmail, IsNotEmpty } from 'class-validator';
+
 export class UpdateUserDto {
 	nickName: string;
 
-	/* 	@IsNotEmpty({
+	@IsNotEmpty({
 		message: '邮箱不能为空'
 	})
 	@IsEmail(
@@ -10,7 +12,11 @@ export class UpdateUserDto {
 			message: '不是合法的邮箱格式'
 		}
 	)
-	email: string; */
+	email: string;
 
 	signature: string;
+
+	captcha: string;
+
+	avatar_url?: string;
 }

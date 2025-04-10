@@ -203,7 +203,7 @@ export class UserService {
 	}
 
 	async updatePassword(passwordDto: UpdateUserPasswordDto) {
-		/* 		const captcha = await this.redisService.get(`update_password_captcha_${passwordDto.email}`);
+		const captcha = await this.redisService.get(`update_password_captcha_${passwordDto.email}`);
 
 		if (!captcha) {
 			throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
@@ -211,7 +211,7 @@ export class UserService {
 
 		if (passwordDto.captcha !== captcha) {
 			throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
-		} */
+		}
 
 		const { id: userId } = await this.dbService.user.findUnique({
 			where: {
@@ -239,7 +239,7 @@ export class UserService {
 	}
 
 	async updateInfo(userId: number, updateUserDto: UpdateUserDto) {
-		/* 		const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
+		const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
 
 		if (!captcha) {
 			throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
@@ -247,7 +247,7 @@ export class UserService {
 
 		if (updateUserDto.captcha !== captcha) {
 			throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
-		} */
+		}
 
 		const userInfo = await this.dbService.user.findUnique({
 			where: {
@@ -261,9 +261,9 @@ export class UserService {
 		if (updateUserDto.signature) {
 			userInfo.sign = updateUserDto.signature;
 		}
-		/* 		if (updateUserDto.avatar_url) {
+		if (updateUserDto.avatar_url) {
 			userInfo.avatar_url = updateUserDto.avatar_url;
-		} */
+		}
 
 		try {
 			const user = await this.dbService.user.update({
@@ -313,5 +313,17 @@ export class UserService {
 			this.logger.error(e, UserService);
 			return '邮箱修改失败';
 		}
+	}
+
+	async searchUser(name: string) {
+		const res = await this.dbService.user.findMany({
+			where: {
+				OR: [{ nickName: { contains: name } }, { username: { contains: name } }]
+			}
+		});
+		res.forEach(_ => Reflect.deleteProperty(_, 'password'));
+
+		if (res.length === 0) return [];
+		return res;
 	}
 }

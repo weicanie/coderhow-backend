@@ -15,7 +15,10 @@ export class FavoriteService {
 		});
 		const res: WeiSum<
 			(typeof favorites)[0],
-			{ chatRecord: ReturnType<typeof this.dbService.chatRecord.findUnique> }
+			WeiSum<
+				{ chatRecord: ReturnType<typeof this.dbService.chatRecord.findUnique> },
+				{ sender: ReturnType<typeof this.dbService.user.findUnique> }
+			>
 		>[] = [];
 		for (let i = 0; i < favorites.length; i++) {
 			const chatRecord = await this.dbService.chatRecord.findUnique({
@@ -23,9 +26,16 @@ export class FavoriteService {
 					id: favorites[i].chatRecordId
 				}
 			});
+			const sender = await this.dbService.user.findUnique({
+				where: {
+					id: chatRecord.senderId
+				}
+			});
+			Reflect.deleteProperty(sender, 'password');
 			res.push({
 				...favorites[i],
-				chatRecord
+				chatRecord,
+				sender
 			});
 		}
 		return res;

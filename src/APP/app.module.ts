@@ -1,5 +1,5 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AichatModule } from '../aichat/aichat.module';
 import { ArticleModule } from '../article/article.module';
@@ -19,6 +19,7 @@ import { TagModule } from '../tag/tag.module';
 import { UserModule } from '../user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ReqInfoInterceptor } from './req-info.interceptor';
 
 @Module({
 	imports: [
@@ -53,16 +54,16 @@ import { AppService } from './app.service';
 			provide: APP_GUARD,
 			useClass: IsLoginGuard
 		},
-		// {
-		// 	provide: APP_PIPE,
-		// 	useClass: ValidationPipe
-		// }
 		//* ValidationPipe默认不对参数进行自动类型转换, 手动设置{ transform: true }来开启（dto的属性也会转）
 		{
 			provide: APP_PIPE,
 			useFactory() {
 				return new ValidationPipe({ transform: true });
 			}
+		},
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: ReqInfoInterceptor
 		}
 	]
 })

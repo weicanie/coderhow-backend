@@ -19,14 +19,9 @@ export class OssController {
 		example: 'mmk.png'
 	})
 	@ApiQuery({
-		name: 'name',
-		type: String,
-		required: true,
-		example: 'mmk.png'
-	})
-	@ApiQuery({
 		name: 'bucketName',
-		type: String
+		type: String,
+		required: false
 	})
 	@RequireLogin()
 	@Get('presignedUrl')

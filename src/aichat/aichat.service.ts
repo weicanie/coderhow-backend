@@ -22,7 +22,7 @@ export class AichatService {
 		内容：${content}
 		`;
 			const response = await this.client.chat.completions.create({
-				model: 'gpt-3.5-turbo',
+				model: 'gpt-4o-mini',
 				messages: [{ role: 'user', content: prompt }], //角色和提问内容
 				max_tokens: 2000, // 答案长短
 				n: 1 // 答案个数

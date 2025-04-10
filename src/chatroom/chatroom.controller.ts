@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { UserInfo } from '../decorator';
+import { RequireLogin, UserInfo } from '../decorator';
 import { ChatroomService } from './chatroom.service';
 @Controller('chatroom')
 export class ChatroomController {
@@ -9,9 +9,13 @@ export class ChatroomController {
 	@Get('create-one-to-one')
 	@ApiQuery({ name: 'friendId', required: true })
 	@ApiResponse({ status: 200, description: 'One-to-one chatroom created successfully' })
+	@RequireLogin()
 	async oneToOne(@Query('friendId') friendId: number, @UserInfo('userId') userId: number) {
 		if (!friendId) {
 			throw new BadRequestException('聊天好友的 id 不能为空');
+		}
+		if (!userId) {
+			throw new BadRequestException('userId 不能为空');
 		}
 		return await this.chatroomService.createOneToOneChatroom(friendId, userId);
 	}
@@ -19,6 +23,7 @@ export class ChatroomController {
 	@Get('create-group')
 	@ApiQuery({ name: 'name', required: true })
 	@ApiResponse({ status: 200, description: 'Group chatroom created successfully' })
+	@RequireLogin()
 	async group(@Query('name') name: string, @UserInfo('userId') userId: number) {
 		return await this.chatroomService.createGroupChatroom(name, userId);
 	}
@@ -27,14 +32,19 @@ export class ChatroomController {
 	@Get('find-group')
 	@ApiQuery({ name: 'name', required: true })
 	@ApiResponse({ status: 200, description: 'Group chatroom created successfully' })
+	@RequireLogin()
 	async findgroup(@Query('name') name: string, @UserInfo('userId') userId: number) {
+		if (!userId) {
+			throw new BadRequestException('userId 不能为空');
+		}
 		return await this.chatroomService.findgroup(name);
 	}
 
 	@ApiOperation({ summary: 'get chatroom list of user ' })
 	@Get('list')
-	@ApiQuery({ name: 'name', required: false })
+	@ApiQuery({ name: 'name', required: false }) //name用于筛选用户的聊天房间（筛选房间名字里有name的）
 	@ApiResponse({ status: 200, description: 'Chatroom list retrieved successfully' })
+	@RequireLogin()
 	async list(@UserInfo('userId') userId: number, @Query('name') name: string) {
 		if (!userId) {
 			throw new BadRequestException('userId 不能为空');
@@ -89,6 +99,7 @@ export class ChatroomController {
 		}
 		return await this.chatroomService.quit(id, quitUserId);
 	}
+
 	@ApiOperation({ summary: 'user query chatroom by name (contain) ' })
 	@Get('findChatroom')
 	@ApiQuery({ name: 'userId1', required: true })
@@ -99,5 +110,13 @@ export class ChatroomController {
 			throw new BadRequestException('用户 id 不能为空');
 		}
 		return await this.chatroomService.queryOneToOneChatroom(+userId1, +userId2);
+	}
+
+	@ApiOperation({ summary: 'search chatroom by name (contain) ' })
+	@Get('search-chatroom')
+	@ApiQuery({ name: 'name', required: true })
+	@ApiResponse({ status: 200, description: 'Chatroom found successfully' })
+	async searchChatroom(@Query('name') name: string) {
+		return await this.chatroomService.searchChatroom(name);
 	}
 }

@@ -49,6 +49,34 @@ export class ChatHistoryService {
 		}
 		return res;
 	}
+	//查询房间最后一条聊天信息
+	async last(chatroomId: number) {
+		const lastMessage = await this.dbService.chatRecord.findFirst({
+			where: {
+				chatroomId: chatroomId
+			},
+			orderBy: {
+				create_at: 'desc' // 按创建时间降序排列
+			}
+		});
+		//房间内没有消息
+		if (lastMessage === null) return;
+		const user = await this.dbService.user.findUnique({
+			where: {
+				id: lastMessage.senderId
+			},
+			select: {
+				id: true,
+				username: true,
+				nickName: true,
+				email: true,
+				create_at: true,
+				avatar_url: true
+			}
+		});
+		// console.log('lastMessage', lastMessage);
+		return { ...lastMessage, sender: user };
+	}
 
 	async add(chatroomId: number, history: HistoryDto) {
 		return await this.dbService.chatRecord.create({

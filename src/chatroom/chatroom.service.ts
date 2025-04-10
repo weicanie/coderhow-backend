@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { WeiSum } from '../chat-history/chat-history.service';
+import { ChatHistoryService, WeiSum } from '../chat-history/chat-history.service';
 import { DbService } from '../DB/db.service';
 import { resBundle } from '../utils';
 
@@ -7,6 +7,9 @@ import { resBundle } from '../utils';
 export class ChatroomService {
 	@Inject(DbService)
 	private dbService: DbService;
+
+	@Inject(ChatHistoryService)
+	private chatHistoryService: ChatHistoryService;
 
 	async createOneToOneChatroom(friendId: number, userId: number) {
 		const { id } = await this.dbService.chatroom.create({
@@ -74,15 +77,23 @@ export class ChatroomService {
 				chatroomId: true
 			}
 		});
-		const chatrooms = await this.dbService.chatroom.findMany({
-			where: {
-				id: {
-					in: chatroomIds.map(item => item.chatroomId)
-				},
-				name: {
-					contains: name
+		//是否通过name筛选房间
+		let target = name
+			? {
+					id: {
+						in: chatroomIds.map(item => item.chatroomId)
+					},
+					name: {
+						contains: name
+					}
 				}
-			},
+			: {
+					id: {
+						in: chatroomIds.map(item => item.chatroomId)
+					}
+				};
+		const chatrooms = await this.dbService.chatroom.findMany({
+			where: target,
 			select: {
 				id: true,
 				name: true,
@@ -95,7 +106,7 @@ export class ChatroomService {
 				(typeof chatrooms)[0],
 				{ userIds: ReturnType<typeof this.dbService.user_chatroom.findMany> }
 			>,
-			{ userCount: number }
+			{ userCount: number; lastMessage: ReturnType<typeof this.chatHistoryService.last> }
 		>[] = [];
 		for (let i = 0; i < chatrooms.length; i++) {
 			const userIds = await this.dbService.user_chatroom.findMany({
@@ -106,6 +117,7 @@ export class ChatroomService {
 					userId: true
 				}
 			});
+
 			//类型为私聊
 			if (chatrooms[i].type === false) {
 				const user = await this.dbService.user.findUnique({
@@ -115,10 +127,13 @@ export class ChatroomService {
 				});
 				chatrooms[i].name = user.nickName;
 			}
+			const lastMessage = await this.chatHistoryService.last(chatrooms[i].id);
+			// console.log('lastMessage', lastMessage);
 			res.push({
 				...chatrooms[i],
 				userCount: userIds.length,
-				userIds: userIds.map(item => item.userId)
+				userIds: userIds.map(item => item.userId),
+				lastMessage
 			});
 		}
 
@@ -180,6 +195,17 @@ export class ChatroomService {
 
 		if (!user) {
 			throw new BadRequestException('用户不存在');
+		}
+
+		const entries = await this.dbService.user_chatroom.findMany({
+			where: {
+				userId: user.id,
+				chatroomId: id
+			}
+		});
+
+		if (entries.length > 0) {
+			return '已在聊天室中';
 		}
 
 		await this.dbService.user_chatroom.create({
@@ -244,5 +270,18 @@ export class ChatroomService {
 		}
 
 		return roomId;
+	}
+
+	async searchChatroom(name: string) {
+		const res = await this.dbService.chatroom.findMany({
+			where: {
+				name: {
+					contains: name
+				}
+			}
+		});
+		const groups = res.filter(_ => _.type === true);
+		if (groups.length === 0) return [];
+		return groups;
 	}
 }
