@@ -1,10 +1,2 @@
-## run
-
-```
-npm install
-```
-
-```
-npm run start
-```
+使用ts和nest重构的论坛网站后端。
 
